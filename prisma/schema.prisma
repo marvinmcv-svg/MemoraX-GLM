@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// MemoraX — Prisma schema
+// memorae-inspired AI assistant for students, teachers, and parents
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,169 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------- Users & Roles ----------
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  name      String
+  role      String   @default("STUDENT") // STUDENT | PARENT | TEACHER
+  avatar    String?  // emoji or initials
+  grade     String?  // for students e.g. "7th Grade"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // relations
+  studentEnrollments Enrollment[]     @relation("StudentEnrollments")
+  studentMemories    Memory[]         @relation("StudentMemories")
+  studentChats       ChatMessage[]    @relation("StudentChats")
+  studentSubmissions Submission[]     @relation("StudentSubmissions")
+  studentReminders   Reminder[]       @relation("StudentReminders")
+  studentTutorMsgs   TeacherMessage[] @relation("TeacherMessageStudent")
+
+  teacherCourses     Course[]         @relation("TeacherCourses")
+  teacherMessages    TeacherMessage[] @relation("TeacherMessageTeacher")
+
+  familyMemberships  FamilyMember[]   @relation("FamilyMemberUser")
 }
 
-model Post {
+// ---------- Family Bundles (up to 2 parents + N students) ----------
+
+model Family {
+  id        String         @id @default(cuid())
+  name      String         // e.g. "The Garcia Family"
+  createdAt DateTime       @default(now())
+  members   FamilyMember[]
+}
+
+model FamilyMember {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  familyId  String
+  userId    String
+  role      String   // STUDENT | PARENT (within the family)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation("FamilyMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Mock Google Classroom ----------
+
+model Course {
+  id          String        @id @default(cuid())
+  name        String        // e.g. "Algebra II"
+  subject     String?       // e.g. "Math"
+  teacherId   String
+  color       String        @default("emerald") // tailwind color token
+  room        String?
+  createdAt   DateTime      @default(now())
+
+  teacher      User          @relation("TeacherCourses", fields: [teacherId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  assignments  Assignment[]
+  teacherMessages TeacherMessage[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  courseId  String
+  studentId String
+  createdAt DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student User   @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+}
+
+model Assignment {
+  id          String       @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  dueDate     DateTime
+  maxPoints   Int          @default(100)
+  type        String       @default("HOMEWORK") // HOMEWORK | QUIZ | PROJECT | ESSAY | READING
+  createdAt   DateTime     @default(now())
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  assignmentId String
+  studentId    String
+  status       String   @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | SUBMITTED | GRADED
+  score        Int?
+  submittedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+}
+
+// ---------- Memory Layer (the memorae DNA) ----------
+
+model Memory {
+  id            String   @id @default(cuid())
+  studentId     String
+  type          String   // NOTE | CONCEPT | HOMEWORK | TUTOR_SESSION | WEAK_AREA | STUDY_TIP
+  content       String
+  tags          String?  // comma-separated
+  relatedAssignmentId String?
+  importance    Int      @default(3) // 1-5
+  createdAt     DateTime @default(now())
+
+  student User @relation("StudentMemories", fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ---------- AI Tutor Chat ----------
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  studentId  String
+  role       String   // user | assistant
+  content    String
+  imageUrl   String?  // stored homework image (data URL or path)
+  mode       String?  // socratic | solution (for assistant msgs)
+  createdAt  DateTime @default(now())
+
+  student User @relation("StudentChats", fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Parent Reminders (WhatsApp-style inbox) ----------
+
+model Reminder {
+  id           String    @id @default(cuid())
+  studentId    String
+  familyId     String
+  type         String    // DAILY_DIGEST | DUE_TODAY | OVERDUE | DUE_SOON | PROGRESS_UPDATE
+  title        String
+  body         String
+  scheduledFor DateTime
+  sentAt       DateTime?
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  student User @relation("StudentReminders", fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Teacher → Student messaging ----------
+
+model TeacherMessage {
+  id        String   @id @default(cuid())
+  courseId  String
+  teacherId String
+  studentId String
+  content   String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher User   @relation("TeacherMessageTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  student User   @relation("TeacherMessageStudent", fields: [studentId], references: [id], onDelete: Cascade)
 }
