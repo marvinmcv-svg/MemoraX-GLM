@@ -107,9 +107,17 @@ export function TeacherClasses({ onOpenCourse }: { onOpenCourse: (id: string) =>
         </div>
       ) : courses.length === 0 ? (
         <Card className="p-10 text-center">
-          <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <Users className="h-7 w-7" />
+          </div>
           <p className="font-medium">No classes yet</p>
-          <p className="text-sm text-muted-foreground mt-1">Create your first class to get started.</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Create your first class to start posting assignments and tracking student progress. It
+            syncs to every enrolled student automatically.
+          </p>
+          <Button className="mt-5 gap-1.5" onClick={() => setShowNewClass(true)}>
+            <Plus className="h-4 w-4" /> Create your first class
+          </Button>
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -332,11 +340,12 @@ function NewClassDialog({
                   type="button"
                   onClick={() => setColor(c.id)}
                   className={cn(
-                    'h-9 w-9 rounded-lg grid place-items-center transition-all',
+                    'h-9 w-9 rounded-lg grid place-items-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     c.class,
                     color === c.id ? 'ring-2 ring-offset-2 ring-ring scale-110' : 'opacity-70 hover:opacity-100'
                   )}
                   aria-label={c.label}
+                  aria-pressed={color === c.id}
                 />
               ))}
             </div>

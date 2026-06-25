@@ -26,7 +26,7 @@ export function AppHeader({
               reset()
               setView('landing')
             }}
-            className="md:hidden grid place-items-center h-8 w-8 rounded-lg hover:bg-muted"
+            className="md:hidden grid place-items-center h-8 w-8 rounded-lg hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Back to landing"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -36,7 +36,7 @@ export function AppHeader({
               reset()
               setView('landing')
             }}
-            className="hidden md:flex items-center gap-2"
+            className="hidden md:flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Back to landing"
           >
             <Logo size="sm" />

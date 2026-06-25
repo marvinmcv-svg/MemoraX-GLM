@@ -102,15 +102,23 @@ export function StudentGroups() {
             ))}
           </div>
         ) : mine.length === 0 ? (
-          <Card className="p-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              You haven&apos;t joined any groups yet. Create one or join a classmate&apos;s group below.
+          <Card className="p-8 text-center">
+            <div className="h-12 w-12 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+              <Users className="h-6 w-6" />
+            </div>
+            <p className="font-medium">You haven&apos;t joined any groups yet</p>
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+              Study groups let the tutor remember everyone&apos;s gaps and help the whole crew. Create
+              one or join a classmate&apos;s group below.
             </p>
+            <Button className="mt-4 gap-1.5" onClick={() => setShowNew(true)}>
+              <Plus className="h-4 w-4" /> Create your first group
+            </Button>
           </Card>
         ) : (
           <div className="space-y-2">
             {mine.map((g) => (
-              <Card key={g.id} className="p-4">
+              <Card key={g.id} className="p-4 hover:shadow-sm transition-shadow">
                 <div className="flex items-start gap-3">
                   <div className="h-11 w-11 rounded-xl bg-[var(--mx-emerald-soft)] grid place-items-center shrink-0">
                     <Users className="h-5 w-5 text-primary" />
@@ -154,7 +162,7 @@ export function StudentGroups() {
           </h3>
           <div className="space-y-2">
             {available.map((g) => (
-              <Card key={g.id} className="p-4">
+              <Card key={g.id} className="p-4 hover:shadow-sm transition-shadow">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-xl bg-muted grid place-items-center shrink-0">
                     <Users className="h-4.5 w-4.5 text-muted-foreground" />

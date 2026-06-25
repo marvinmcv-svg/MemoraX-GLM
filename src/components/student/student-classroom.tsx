@@ -16,7 +16,7 @@ const STATUS_META: Record<SubmissionStatus, { label: string; color: string; icon
   NOT_STARTED: { label: 'Not started', color: 'text-muted-foreground', icon: Circle },
   IN_PROGRESS: { label: 'In progress', color: 'text-[var(--mx-warm)]', icon: Clock },
   SUBMITTED: { label: 'Submitted', color: 'text-primary', icon: CheckCircle2 },
-  GRADED: { label: 'Graded', color: 'text-emerald-600', icon: CheckCircle2 },
+  GRADED: { label: 'Graded', color: 'text-primary', icon: CheckCircle2 },
 }
 
 const TYPE_ICON: Record<string, React.ElementType> = {
@@ -69,7 +69,7 @@ export function StudentClassroom() {
             </p>
           </div>
           <Badge variant="secondary" className="hidden sm:flex gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Synced just now
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Synced just now
           </Badge>
         </div>
       </Card>
@@ -203,7 +203,7 @@ function AssignmentRow({ a }: { a: AssignmentLite }) {
             {a.score !== null && (
               <>
                 <span className="text-muted-foreground">·</span>
-                <span className="text-emerald-600 font-medium">{a.score}/{a.maxPoints}</span>
+                <span className="text-primary font-medium">{a.score}/{a.maxPoints}</span>
               </>
             )}
           </div>

@@ -84,10 +84,13 @@ export function StudentMemories() {
         </div>
       ) : memories.length === 0 ? (
         <Card className="p-10 text-center">
-          <Brain className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <Brain className="h-7 w-7" />
+          </div>
           <p className="font-medium">No memories yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Chat with your tutor or upload homework — memories build up automatically.
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Chat with your tutor or upload homework — memories build up automatically as you learn.
+            The tutor uses them to personalize guidance and surface concepts before you forget them.
           </p>
         </Card>
       ) : (

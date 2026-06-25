@@ -184,7 +184,7 @@ export function Pricing({ onCta }: { onCta?: (tier: string) => void }) {
         <button
           onClick={() => setBilling((b) => (b === 'monthly' ? 'annual' : 'monthly'))}
           className={cn(
-            'relative h-7 w-12 rounded-full transition-colors',
+            'relative h-7 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
             billing === 'annual' ? 'bg-primary' : 'bg-muted'
           )}
           aria-label="Toggle billing period"
@@ -199,7 +199,7 @@ export function Pricing({ onCta }: { onCta?: (tier: string) => void }) {
         <span className={cn('text-sm font-medium', billing === 'annual' ? 'text-foreground' : 'text-muted-foreground')}>
           Annual
         </span>
-        <Badge variant="outline" className="text-[11px] gap-1 text-emerald-600 border-emerald-600/30">
+        <Badge variant="outline" className="text-[11px] gap-1 text-primary border-primary/30">
           Save 25%
         </Badge>
       </div>

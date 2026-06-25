@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { AlertTriangle, AlertCircle, Flame, MessageSquare, FileText, Loader2 } from 'lucide-react'
+import { AlertTriangle, AlertCircle, Flame, MessageSquare, FileText, Loader2, CheckCircle2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -117,16 +117,21 @@ export function TeacherAtRisk() {
         </div>
       ) : students.length === 0 ? (
         <Card className="p-10 text-center">
-          <AlertTriangle className="h-10 w-10 mx-auto text-emerald-500 mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <CheckCircle2 className="h-7 w-7" />
+          </div>
           <p className="font-medium">No at-risk students right now</p>
-          <p className="text-sm text-muted-foreground mt-1">Everyone&apos;s on track. 🎉</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Everyone&apos;s on track. 🎉 The tutor&apos;s memory layer is watching for overdue work,
+            frustration signals, and low completion — you&apos;ll see flags appear here automatically.
+          </p>
         </Card>
       ) : (
         <div className="space-y-3">
           {students.map((s) => {
             const meta = RISK_META[s.riskLevel]
             return (
-              <Card key={s.id} className={cn('p-4 ring-1', meta.ring)}>
+              <Card key={s.id} className={cn('p-4 ring-1 hover:shadow-md transition-shadow', meta.ring)}>
                 <div className="flex items-start gap-3">
                   <Avatar className="h-11 w-11 shrink-0">
                     <AvatarFallback className="bg-[var(--mx-clay)]/10">{s.avatar ?? s.name[0]}</AvatarFallback>

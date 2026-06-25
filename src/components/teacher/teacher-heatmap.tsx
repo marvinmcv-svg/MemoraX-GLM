@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Flame, Loader2, Sparkles, Lightbulb } from 'lucide-react'
+import { Flame, Loader2, Sparkles, Lightbulb, CheckCircle2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -108,10 +108,13 @@ export function TeacherHeatmap() {
         </div>
       ) : visibleCourses.length === 0 ? (
         <Card className="p-10 text-center">
-          <Flame className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-[var(--mx-warm)]/10 text-[var(--mx-warm)] grid place-items-center mb-3">
+            <Flame className="h-7 w-7" />
+          </div>
           <p className="font-medium">No concept data yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Once students chat with the tutor, their weak areas will aggregate into a class heatmap here.
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Once students chat with the tutor, their weak areas will aggregate into a class heatmap
+            here. Try sending a quick assignment and checking back after a few tutor sessions.
           </p>
         </Card>
       ) : (
@@ -122,13 +125,15 @@ export function TeacherHeatmap() {
               <Badge variant="outline" className="text-[11px]">{ch.course.studentCount} students</Badge>
             </div>
             {ch.concepts.length === 0 ? (
-              <Card className="p-6 text-center">
-                <p className="text-sm text-muted-foreground">No concept struggles recorded for this class yet.</p>
+              <Card className="p-6 text-center hover:shadow-sm transition-shadow">
+                <CheckCircle2 className="h-8 w-8 mx-auto text-primary mb-2" />
+                <p className="text-sm font-medium">No struggles recorded for this class yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Looks like everyone&apos;s keeping up!</p>
               </Card>
             ) : (
               <div className="space-y-2">
                 {ch.concepts.map((c) => (
-                  <Card key={c.topic} className="p-4">
+                  <Card key={c.topic} className="p-4 hover:shadow-sm transition-shadow">
                     <div className="flex items-center gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
@@ -204,7 +209,7 @@ function SeverityBadge({ severity }: { severity: 'high' | 'medium' | 'low' }) {
   const meta = {
     high: { label: 'High struggle', cls: 'bg-[var(--mx-clay)]/10 text-[var(--mx-clay)]' },
     medium: { label: 'Some struggle', cls: 'bg-[var(--mx-warm)]/10 text-[var(--mx-warm)]' },
-    low: { label: 'Solid', cls: 'bg-emerald-100 text-emerald-700' },
+    low: { label: 'Solid', cls: 'bg-primary/10 text-primary' },
   }
   const m = meta[severity]
   return <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full', m.cls)}>{m.label}</span>

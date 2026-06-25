@@ -71,7 +71,9 @@ export function TeacherMessages() {
         </div>
       ) : messages.length === 0 ? (
         <Card className="p-10 text-center">
-          <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <MessageSquare className="h-7 w-7" />
+          </div>
           <p className="font-medium">No messages sent yet</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
             Open the Student Progress tab, pick a class, and tap “Message” on any student to send a
@@ -81,7 +83,7 @@ export function TeacherMessages() {
       ) : (
         <div className="space-y-3">
           {messages.map((m) => (
-            <Card key={m.id} className="p-4">
+            <Card key={m.id} className="p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10 shrink-0">
                   <AvatarFallback className="bg-[var(--mx-emerald-soft)]">{m.studentAvatar ?? m.studentName[0]}</AvatarFallback>
@@ -91,7 +93,7 @@ export function TeacherMessages() {
                     <p className="font-medium text-sm">{m.studentName}</p>
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5">{m.courseName}</Badge>
                     {m.readAt ? (
-                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 text-emerald-600">read</Badge>
+                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 text-primary">read</Badge>
                     ) : (
                       <Badge variant="outline" className="text-[10px] py-0 px-1.5">delivered</Badge>
                     )}

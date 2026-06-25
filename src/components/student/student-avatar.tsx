@@ -215,7 +215,7 @@ export function StudentAvatar() {
                 <p className="text-xs font-medium leading-tight">{a.name}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{a.desc}</p>
                 {unlocked ? (
-                  <Badge variant="outline" className="mt-1.5 text-[10px] text-emerald-600 py-0">+{a.coinReward} 🪙</Badge>
+                  <Badge variant="outline" className="mt-1.5 text-[10px] text-primary py-0">+{a.coinReward} 🪙</Badge>
                 ) : (
                   <div className="mt-1.5 inline-flex items-center gap-0.5 text-[10px] text-muted-foreground">
                     <Lock className="h-2.5 w-2.5" /> locked

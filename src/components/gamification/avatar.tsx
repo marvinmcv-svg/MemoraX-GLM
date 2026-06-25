@@ -85,10 +85,10 @@ export function Avatar({
 
 export function RarityBadge({ rarity }: { rarity: string }) {
   const colors: Record<string, string> = {
-    common: 'bg-slate-100 text-slate-600',
-    rare: 'bg-sky-100 text-sky-700',
-    epic: 'bg-fuchsia-100 text-fuchsia-700',
-    legendary: 'bg-amber-100 text-amber-700',
+    common: 'bg-slate-100 text-slate-600 dark:bg-slate-200/20 dark:text-slate-300',
+    rare: 'bg-sky-100 text-sky-700 dark:bg-sky-200/20 dark:text-sky-300',
+    epic: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-200/20 dark:text-fuchsia-300',
+    legendary: 'bg-amber-100 text-amber-700 dark:bg-amber-200/20 dark:text-amber-300',
   }
   return (
     <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize', colors[rarity] ?? colors.common)}>

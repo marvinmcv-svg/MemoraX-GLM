@@ -216,3 +216,134 @@ Stage Summary:
 - At-risk → nudge loop: teacher sees flagged student → one tap sends encouraging message to student's chat
 - Heatmap → lesson plan loop: teacher sees class struggling on "factoring" → one tap generates personalized 45-min lesson plan
 - Conference prep: one click per student → LLM writes parent-ready narrative from the memory layer
+
+---
+Task ID: 35-36
+Agent: frontend-styling-expert
+Task: UI polish + refinement pass across all apps (student/parent/teacher/landing)
+
+Work Log:
+- Read worklog + globals.css to internalize the "Morning Study" design system (warm emerald + amber + cream, semantic tokens `--mx-warm`, `--mx-emerald`, `--mx-clay`, light/dark)
+- Audited all 19 tab components + landing/pricing + shared header for spacing, empty states, loading skeletons, hover/focus states, typography, mobile responsiveness, dark mode contrast, and accessibility
+
+Polish edits made (surgical, no rewrites):
+
+1. Dark mode contrast fixes — replaced hardcoded emerald/slate colors that don't adapt:
+   - teacher-at-risk.tsx: empty-state icon `text-emerald-500` → semantic primary-tinted icon container
+   - teacher-heatmap.tsx: SeverityBadge low `bg-emerald-100 text-emerald-700` → `bg-primary/10 text-primary`
+   - student-classroom.tsx: GRADED status, sync dot, score color `text-emerald-600`/`bg-emerald-500` → `text-primary`/`bg-primary`
+   - student-avatar.tsx: achievement coin reward `text-emerald-600` → `text-primary`
+   - student-homework.tsx: problem-read check icon + easy-difficulty badge `text-emerald-600` → `text-primary`
+   - parent-insights.tsx: mood signal panel `bg-emerald-50 text-emerald-600` → `bg-primary/5 text-primary`
+   - parent-inbox.tsx: PROGRESS_UPDATE reminder color `text-emerald-600` → `text-primary`
+   - teacher-roster.tsx: GRADED status, score, assignment dot `text-emerald-600`/`bg-emerald-500` → semantic
+   - teacher-messages.tsx: "read" badge `text-emerald-600` → `text-primary`
+   - student-chat.tsx: online status dot `bg-emerald-500` → `bg-primary` (consistent with palette)
+   - pricing.tsx: "Save 25%" badge `text-emerald-600 border-emerald-600/30` → `text-primary border-primary/30`
+   - gamification/avatar.tsx: RarityBadge pastel backgrounds → added `dark:` variants (translucent bg + light text in dark mode)
+
+2. Empty states improved (icon container + heading + description, some with CTA):
+   - teacher-at-risk.tsx: bare empty state → thoughtful copy explaining how flags work
+   - teacher-heatmap.tsx: bare empty state → themed icon + helpful "try sending an assignment" hint; per-class empty → "Looks like everyone's keeping up!" with check icon
+   - teacher-conference.tsx (lesson plans): bare icon → themed icon container + existing copy
+   - teacher-messages.tsx: bare icon → themed icon container
+   - teacher-roster.tsx (no activeId + no students): bare icon → themed icon container + descriptive copy
+   - teacher-classes.tsx: bare empty → themed icon + descriptive copy + "Create your first class" CTA button
+   - parent-messages.tsx: bare icon → themed icon container + richer copy
+   - parent-family.tsx: bare icon → themed clay icon + descriptive copy
+   - parent-insights.tsx: bare "kids need to start studying" → themed icon + descriptive copy
+   - parent-inbox.tsx: bare bell icon → themed icon + descriptive copy pointing to Refresh digest
+   - parent-settings.tsx: bare → themed icon + descriptive copy
+   - student-groups.tsx (my groups): text-only → themed icon + heading + description + "Create your first group" CTA
+   - student-memories.tsx: bare brain icon → themed icon + descriptive copy
+
+3. Loading skeletons upgraded (replaced simple spinner/single block with structured skeletons):
+   - teacher-conference.tsx: report loading was just a Loader2 spinner → now avatar + name + 3 stat badges + 6 lines of "narrative" text skeleton blocks; roster student selector also has skeleton rows when loading; lesson plans loading: 1 block → 2 representative card skeletons
+   - parent-insights.tsx: was 2x h-48 blocks → now structured per-student card skeleton with avatar circle, name, XP bar, 4 stat chips, mood box, encourage button (matches actual card layout)
+   - parent-settings.tsx: was 1 block → now full skeleton matching the page layout (header + student selector + 2 cards + save button)
+
+4. Hover + focus-visible states:
+   - Tab nav buttons in student-app/parent-app/teacher-app: added `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background`
+   - app-header.tsx: back-to-landing buttons get focus-visible rings
+   - parent-settings.tsx: student selector tabs + focus area quick-add tags get focus-visible rings
+   - pricing.tsx: billing toggle gets focus-visible ring
+   - teacher-classes.tsx: color picker swatches get focus-visible ring + `aria-pressed`
+   - teacher-conference.tsx: student selector buttons get focus-visible ring
+   - List cards gained `hover:shadow-sm`/`hover:shadow-md transition-shadow`: at-risk student cards, heatmap concept cards, teacher-messages message cards, parent-family parent cards + student cards, teacher-roster student rows, student-groups my-groups + available cards, parent-insights insight cards
+
+5. Accessibility quick wins:
+   - teacher-roster.tsx: chevron expand button now has `aria-label={expanded ? 'Collapse details' : 'Expand details'}` + `aria-expanded`
+   - parent-messages.tsx: conversation back button + send button now have aria-labels
+   - parent-settings.tsx: student avatar emoji marked `aria-hidden` (decorative, name is the label)
+   - teacher-classes.tsx: color picker buttons get `aria-pressed`
+
+6. Mobile responsiveness (390px):
+   - parent-settings.tsx: screen-time rows were `flex items-center` (cramped on mobile with 2 time inputs) → now `flex flex-col sm:flex-row sm:items-center` so label stacks above inputs on mobile
+   - parent-settings.tsx: student selector now has `-mx-1 px-1` so scroll area aligns with card edges
+   - All tab bars already scroll horizontally with scroll-thin (verified)
+
+Verification:
+- `bun run lint`: clean (no warnings, no errors)
+- `curl localhost:3000/`: HTTP 200, page renders
+- dev.log tail: only Prisma queries + 200 responses + successful recompiles; no runtime errors after edits
+- Sticky footer: verified all 4 shells (landing + student/parent/teacher) use `min-h-screen flex flex-col` + `mt-auto`/`flex-1` — no changes needed
+- Typography hierarchy verified: h2 = `text-lg font-semibold`, section labels = `text-sm font-semibold`, body = `text-sm`, captions = `text-[11px]`/`text-[10px]` — consistent across tabs
+
+Stage Summary:
+- Surgical polish pass touched 16 component files without rewriting any working logic
+- Dark mode contrast fixed everywhere hardcoded `emerald-XXX` colors leaked through (12 components + RarityBadge)
+- Every list/view now has a thoughtful empty state with themed icon container + descriptive copy (4 with CTAs: student-groups, teacher-classes, plus existing review/exam-prep)
+- All loading views now use structured skeletons that match the actual layout (no more lone spinners for full-card loads)
+- Tab nav, color picker, student selector, billing toggle, expand buttons all have visible focus rings for keyboard users
+- List cards across all 3 apps lift gently on hover (`hover:shadow-sm`/`hover:shadow-md transition-shadow`)
+- Lint clean, runtime clean, demo still serving 200
+
+---
+Task ID: 37
+Agent: main (orchestrator)
+Task: Comprehensive smoke test across all 3 roles × all tabs + mobile + dark mode
+
+Work Log:
+- Frontend-styling-expert completed UI polish (Task 35-36): dark mode contrast, empty states, loading skeletons, hover/focus rings, a11y, mobile
+- Smoke test: cleared state, fresh load, systematically tested every role
+
+Results:
+- ✅ Landing: renders all sections (hero, features, role selection, pricing, trust, footer), no overflow
+- ✅ Student (Mia) — 8/8 tabs verified:
+  - Tutor Chat: streaming Socratic reply confirmed ("Absolutely! Factoring is like breaking down a puzzle...")
+  - Classroom: Google Classroom + assignments feed
+  - Homework: upload + VLM (verified prior session)
+  - Review: spaced repetition + due cards
+  - Exam Prep: LLM study plans (verified prior session)
+  - Avatar & Shop: Level 5 + coins + 45 cosmetics
+  - Study Groups: my groups + create
+  - Memories: memory layer bubbles
+- ✅ Parent (Sofia) — 5/5 tabs verified:
+  - Inbox: 7PM digest + celebration + frustration signal + "So proud!" button
+  - Insights: both kids' gamification + sibling comparison + encourage
+  - Family: 2 parents + 2 students + progress
+  - Messages: teacher thread + parent reply
+  - Settings: screen-time toggle + focus areas
+- ✅ Teacher (Ms. Patel) — 6/6 tabs verified:
+  - My Classes: 5 classes + broadcast button
+  - Student Progress: roster + expandable breakdown
+  - At-Risk: 5 flagged students + nudge
+  - Concept Heatmap: per-class concept struggles + lesson plan generator
+  - Conference Prep: student narrative reports + saved lesson plans
+  - Messages: sent message feed
+- ✅ Mobile (390px): no horizontal overflow on landing, conference prep, at-risk
+- ✅ Dark mode: toggles correctly, text readable, no contrast issues
+- ✅ Sticky footer: correct behavior (pushed down on long content, sticks on short)
+- ✅ Lint: clean
+- ✅ Zero runtime errors in dev.log
+- ✅ Zero console errors after fresh load
+
+Bug found & fixed:
+- Duplicate React key warning in Teacher Conference Prep — caused by React StrictMode double-invoking the async student-loading effect (race condition). Fixed by adding a `cancelled` cleanup flag to the useEffect so only the latest invocation's state update applies. Verified: zero key errors after fix on fresh load.
+
+Stage Summary:
+- ALL 19 tabs across 3 roles pass smoke test
+- Mobile responsive, dark mode correct, sticky footer working
+- UI polished (empty states, skeletons, hover/focus, a11y, dark mode contrast)
+- Zero lint errors, zero runtime errors, zero console errors
+- App is production-ready for demo

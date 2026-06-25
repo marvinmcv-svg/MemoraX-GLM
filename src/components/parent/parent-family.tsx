@@ -55,9 +55,14 @@ export function ParentFamily() {
   if (!family) {
     return (
       <Card className="p-10 text-center">
-        <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+        <div className="h-14 w-14 mx-auto rounded-2xl bg-[var(--mx-clay)]/10 text-[var(--mx-clay)] grid place-items-center mb-3">
+          <Users className="h-7 w-7" />
+        </div>
         <p className="font-medium">No family bundle found</p>
-        <p className="text-sm text-muted-foreground mt-1">Contact support to set up your family.</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          Family bundles link parents and students so everyone shares the same reminders. Contact
+          support to set yours up.
+        </p>
       </Card>
     )
   }
@@ -98,7 +103,7 @@ export function ParentFamily() {
         </h3>
         <div className="grid sm:grid-cols-2 gap-3">
           {family.parents.map((p) => (
-            <Card key={p.id} className="p-4 flex items-center gap-3">
+            <Card key={p.id} className="p-4 flex items-center gap-3 hover:shadow-sm transition-shadow">
               <Avatar className="h-11 w-11">
                 <AvatarFallback className="bg-[var(--mx-warm-soft)]">{p.avatar ?? p.name[0]}</AvatarFallback>
               </Avatar>
@@ -142,7 +147,7 @@ export function ParentFamily() {
 function StudentCard({ s }: { s: FamilyData['students'][number] }) {
   const completion = s.stats.total ? Math.round((s.stats.done / s.stats.total) * 100) : 0
   return (
-    <Card className="p-5">
+    <Card className="p-5 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-4">
         <Avatar className="h-12 w-12">
           <AvatarFallback className="bg-[var(--mx-emerald-soft)] text-lg">{s.avatar ?? s.name[0]}</AvatarFallback>

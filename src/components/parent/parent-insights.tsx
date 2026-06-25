@@ -84,10 +84,31 @@ export function ParentInsights() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="h-48 rounded-xl bg-muted animate-pulse" />
-        ))}
+      <div className="space-y-5">
+        {/* Header skeleton */}
+        <div className="h-24 rounded-xl bg-muted animate-pulse" />
+        {/* Per-student cards skeleton */}
+        <div className="grid lg:grid-cols-2 gap-5">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-border/60 p-5 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="h-28 w-28 rounded-2xl bg-muted animate-pulse shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-1.5 w-full bg-muted animate-pulse rounded-full mt-2" />
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[...Array(4)].map((_, j) => (
+                  <div key={j} className="h-14 rounded-lg bg-muted animate-pulse" />
+                ))}
+              </div>
+              <div className="h-16 rounded-lg bg-muted animate-pulse" />
+              <div className="h-9 rounded-md bg-muted animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -95,9 +116,14 @@ export function ParentInsights() {
   if (students.length === 0) {
     return (
       <Card className="p-10 text-center">
-        <Sparkles className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+        <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+          <Sparkles className="h-7 w-7" />
+        </div>
         <p className="font-medium">No insights yet</p>
-        <p className="text-sm text-muted-foreground mt-1">Your kids need to start studying first!</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          Once your kids chat with the tutor, complete homework, or earn XP, their growth — streaks,
+          badges, mood, and milestones — will show up here.
+        </p>
       </Card>
     )
   }
@@ -177,7 +203,7 @@ function StudentInsightCard({
 }) {
   const g = s.gamification
   return (
-    <Card className="p-5">
+    <Card className="p-5 hover:shadow-md transition-shadow">
       {/* Header: avatar + name + level */}
       <div className="flex items-start gap-4 mb-4">
         <Avatar config={s.avatarConfig} size="md" />
@@ -236,7 +262,7 @@ function StudentInsightCard({
             <p className="text-xs text-muted-foreground">No recent activity</p>
           )}
         </div>
-        <div className={cn('rounded-lg p-3', s.mood.frustrationSignals > 0 ? 'bg-[var(--mx-clay)]/10' : 'bg-emerald-50')}>
+        <div className={cn('rounded-lg p-3', s.mood.frustrationSignals > 0 ? 'bg-[var(--mx-clay)]/10' : 'bg-primary/5')}>
           <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
             <AlertCircle className="h-3 w-3" /> Mood signals
           </p>
@@ -245,7 +271,7 @@ function StudentInsightCard({
               {s.mood.frustrationSignals} moment{s.mood.frustrationSignals > 1 ? 's' : ''} of frustration this week
             </p>
           ) : (
-            <p className="text-xs text-emerald-600">All smooth sailing 🌿</p>
+            <p className="text-xs text-primary">All smooth sailing 🌿</p>
           )}
         </div>
       </div>

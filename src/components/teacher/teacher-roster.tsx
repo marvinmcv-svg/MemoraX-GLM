@@ -51,7 +51,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   NOT_STARTED: { label: 'Not started', color: 'text-muted-foreground' },
   IN_PROGRESS: { label: 'In progress', color: 'text-[var(--mx-warm)]' },
   SUBMITTED: { label: 'Submitted', color: 'text-primary' },
-  GRADED: { label: 'Graded', color: 'text-emerald-600' },
+  GRADED: { label: 'Graded', color: 'text-primary' },
 }
 
 export function TeacherRoster({
@@ -133,9 +133,13 @@ export function TeacherRoster({
 
       {!activeId ? (
         <Card className="p-10 text-center">
-          <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <Users className="h-7 w-7" />
+          </div>
           <p className="font-medium">Select a class to see your roster</p>
-          <p className="text-sm text-muted-foreground mt-1">Pick a class above or create one from the Classes tab.</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Pick a class above, or head back to the Classes tab to create one.
+          </p>
         </Card>
       ) : loading ? (
         <div className="space-y-3">
@@ -145,8 +149,13 @@ export function TeacherRoster({
         </div>
       ) : students.length === 0 ? (
         <Card className="p-10 text-center">
-          <Users className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <Users className="h-7 w-7" />
+          </div>
           <p className="font-medium">No students enrolled yet</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Once students join this class, their progress and the tutor&apos;s insights will show up here.
+          </p>
         </Card>
       ) : (
         <>
@@ -196,7 +205,7 @@ function SummaryChip({ icon: Icon, value, label, tone }: { icon: React.ElementTy
 function StudentRow({ s, onMessage }: { s: RosterStudent; onMessage: () => void }) {
   const [expanded, setExpanded] = React.useState(false)
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <div className="p-4 flex items-center gap-3">
         <Avatar className="h-11 w-11 shrink-0">
           <AvatarFallback className="bg-[var(--mx-emerald-soft)]">{s.avatar ?? s.name[0]}</AvatarFallback>
@@ -220,7 +229,7 @@ function StudentRow({ s, onMessage }: { s: RosterStudent; onMessage: () => void 
           <Button variant="outline" size="sm" className="gap-1.5" onClick={onMessage}>
             <MessageSquare className="h-3.5 w-3.5" /> Message
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpanded((e) => !e)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpanded((e) => !e)} aria-label={expanded ? 'Collapse details' : 'Expand details'} aria-expanded={expanded}>
             <ChevronDown className={cn('h-4 w-4 transition-transform', expanded && 'rotate-180')} />
           </Button>
         </div>
@@ -236,9 +245,9 @@ function StudentRow({ s, onMessage }: { s: RosterStudent; onMessage: () => void 
                 const meta = STATUS_META[a.status] ?? STATUS_META.NOT_STARTED
                 return (
                   <div key={a.assignmentId} className="flex items-center gap-2 text-sm">
-                    <span className={cn('h-1.5 w-1.5 rounded-full', a.status === 'GRADED' ? 'bg-emerald-500' : a.daysUntilDue < 0 ? 'bg-[var(--mx-clay)]' : 'bg-muted-foreground/40')} />
+                    <span className={cn('h-1.5 w-1.5 rounded-full', a.status === 'GRADED' ? 'bg-primary' : a.daysUntilDue < 0 ? 'bg-[var(--mx-clay)]' : 'bg-muted-foreground/40')} />
                     <span className="truncate flex-1">{a.title}</span>
-                    {a.score !== null && <span className="text-xs text-emerald-600">{a.score}/{a.maxPoints}</span>}
+                    {a.score !== null && <span className="text-xs text-primary">{a.score}/{a.maxPoints}</span>}
                     <span className={cn('text-xs font-medium', meta.color)}>{meta.label}</span>
                     <span className="text-xs text-muted-foreground w-16 text-right">
                       {a.daysUntilDue < 0 ? `${Math.abs(a.daysUntilDue)}d over` : a.daysUntilDue === 0 ? 'today' : `${a.daysUntilDue}d`}

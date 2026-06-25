@@ -16,7 +16,7 @@ const TYPE_META: Record<ReminderType, { icon: React.ElementType; color: string; 
   DUE_TODAY: { icon: Clock, color: 'text-[var(--mx-warm)]', ring: 'ring-[var(--mx-warm-soft)]' },
   DUE_SOON: { icon: Clock, color: 'text-[var(--mx-warm)]', ring: 'ring-[var(--mx-warm-soft)]' },
   OVERDUE: { icon: AlertTriangle, color: 'text-[var(--mx-clay)]', ring: 'ring-[var(--mx-clay)]/30' },
-  PROGRESS_UPDATE: { icon: TrendingUp, color: 'text-emerald-600', ring: 'ring-[var(--mx-emerald-soft)]' },
+  PROGRESS_UPDATE: { icon: TrendingUp, color: 'text-primary', ring: 'ring-[var(--mx-emerald-soft)]' },
   FRUSTRATION_SIGNAL: { icon: Heart, color: 'text-[var(--mx-clay)]', ring: 'ring-[var(--mx-clay)]/20' },
   CELEBRATION: { icon: Sparkles, color: 'text-[var(--mx-warm)]', ring: 'ring-[var(--mx-warm-soft)]' },
   SIBLING_MILESTONE: { icon: TrendingUp, color: 'text-primary', ring: 'ring-[var(--mx-emerald-soft)]' },
@@ -101,10 +101,13 @@ export function ParentInbox({ refreshKey }: { refreshKey: number }) {
             </div>
           ) : reminders.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center px-6 py-10">
-              <BellRing className="h-10 w-10 text-muted-foreground mb-3" />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary grid place-items-center mb-4">
+                <BellRing className="h-7 w-7" />
+              </div>
               <p className="font-medium">No reminders yet</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                Tap “Refresh digest” to generate today&apos;s 7 PM homework digest for your kids.
+                Tap <b>Refresh digest</b> in the top bar to generate today&apos;s 7 PM homework
+                digest for your kids. You&apos;ll also get morning-of and overdue alerts as they happen.
               </p>
             </div>
           ) : (

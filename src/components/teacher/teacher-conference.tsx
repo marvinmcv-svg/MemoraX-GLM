@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { FileText, Loader2, Sparkles, BookOpen, Download } from 'lucide-react'
+import { FileText, Sparkles, BookOpen, Download } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,7 @@ export function TeacherConference() {
   // load roster (all students across teacher's courses)
   React.useEffect(() => {
     if (!user) return
+    let cancelled = false
     api.teacherCourses(user.id).then(async (r) => {
       const allStudents: RosterStudent[] = []
       const seen = new Set<string>()
@@ -46,9 +47,12 @@ export function TeacherConference() {
           }
         }
       }
-      setStudents(allStudents)
-      if (allStudents.length > 0) setSelectedId(allStudents[0].id)
+      if (!cancelled) {
+        setStudents(allStudents)
+        if (allStudents.length > 0) setSelectedId(allStudents[0].id)
+      }
     })
+    return () => { cancelled = true }
   }, [user])
 
   // load lesson plans
@@ -102,27 +106,53 @@ export function TeacherConference() {
           <div className="grid md:grid-cols-[200px_1fr] gap-4">
             {/* student selector */}
             <div className="space-y-1 max-h-[60vh] overflow-y-auto scroll-thin">
-              {students.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSelectedId(s.id)}
-                  className={cn(
-                    'w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                    selectedId === s.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                  )}
-                >
-                  <span className="text-base">{s.avatar ?? '🎒'}</span>
-                  <span className="text-sm font-medium truncate">{s.name}</span>
-                </button>
-              ))}
+              {students.length === 0 ? (
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                students.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedId(s.id)}
+                    className={cn(
+                      'w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      selectedId === s.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                    )}
+                  >
+                    <span className="text-base">{s.avatar ?? '🎒'}</span>
+                    <span className="text-sm font-medium truncate">{s.name}</span>
+                  </button>
+                ))
+              )}
             </div>
 
             {/* report */}
             <Card className="p-5 min-h-[300px]">
               {loadingReport ? (
-                <div className="h-full flex flex-col items-center justify-center gap-3 py-12">
-                  <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                  <p className="text-sm text-muted-foreground">Drafting narrative from memory layer…</p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                    </div>
+                    <div className="flex gap-1.5">
+                      <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+                      <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+                      <div className="h-5 w-12 bg-muted animate-pulse rounded-full" />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <div className="h-3 w-full bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-11/12 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-full bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-9/12 bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-full bg-muted animate-pulse rounded" />
+                    <div className="h-3 w-10/12 bg-muted animate-pulse rounded" />
+                  </div>
                 </div>
               ) : report ? (
                 <div>
@@ -163,10 +193,16 @@ export function TeacherConference() {
         {/* Lesson plans */}
         <TabsContent value="lessons" className="mt-4">
           {loadingLessons ? (
-            <div className="h-32 rounded-xl bg-muted animate-pulse" />
+            <div className="space-y-3">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-20 rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
           ) : lessons.length === 0 ? (
             <Card className="p-10 text-center">
-              <BookOpen className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <div className="h-14 w-14 mx-auto rounded-2xl bg-[var(--mx-warm)]/10 text-[var(--mx-warm)] grid place-items-center mb-3">
+                <BookOpen className="h-7 w-7" />
+              </div>
               <p className="font-medium">No lesson plans yet</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
                 Go to the <b>Concept Heatmap</b> tab and tap “Lesson plan” on any struggling concept to

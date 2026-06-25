@@ -173,7 +173,7 @@ export function StudentChat() {
       <div className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--mx-emerald-soft)]/50">
         <div className="relative h-10 w-10 rounded-full bg-primary grid place-items-center text-primary-foreground font-semibold shrink-0">
           M
-          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
+          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-primary ring-2 ring-card" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium leading-tight flex items-center gap-1.5">

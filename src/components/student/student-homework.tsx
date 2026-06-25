@@ -188,7 +188,7 @@ export function StudentHomework() {
                 className="space-y-4"
               >
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
                   <h3 className="font-semibold">Problem read</h3>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -206,7 +206,7 @@ export function StudentHomework() {
                         ? 'text-[var(--mx-clay)]'
                         : analysis.difficulty === 'medium'
                         ? 'text-[var(--mx-warm)]'
-                        : 'text-emerald-600'
+                        : 'text-primary'
                     )}
                   >
                     {analysis.difficulty} difficulty

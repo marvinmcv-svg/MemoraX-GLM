@@ -83,14 +83,31 @@ export function ParentSettings() {
   }
 
   if (loading) {
-    return <div className="h-48 rounded-xl bg-muted animate-pulse" />
+    return (
+      <div className="space-y-5">
+        <div className="h-24 rounded-xl bg-muted animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-10 w-28 rounded-lg bg-muted animate-pulse" />
+          <div className="h-10 w-28 rounded-lg bg-muted animate-pulse" />
+        </div>
+        <div className="h-48 rounded-xl bg-muted animate-pulse" />
+        <div className="h-48 rounded-xl bg-muted animate-pulse" />
+        <div className="h-10 rounded-md bg-muted animate-pulse" />
+      </div>
+    )
   }
 
   if (students.length === 0) {
     return (
       <Card className="p-10 text-center">
-        <Settings className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+        <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+          <Settings className="h-7 w-7" />
+        </div>
         <p className="font-medium">No students to configure</p>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          Once your family bundle has students linked, you can tune screen-time windows and focus
+          areas per kid from here.
+        </p>
       </Card>
     )
   }
@@ -113,19 +130,19 @@ export function ParentSettings() {
       </Card>
 
       {/* Student selector */}
-      <div className="flex items-center gap-2 overflow-x-auto scroll-thin pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto scroll-thin pb-1 -mx-1 px-1">
         {students.map((s) => (
           <button
             key={s.id}
             onClick={() => setSelectedId(s.id)}
             className={cn(
-              'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors border',
+              'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               selectedId === s.id
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground border-border/60 hover:text-foreground'
             )}
           >
-            <span>{s.avatar}</span>
+            <span aria-hidden>{s.avatar}</span>
             {s.name.split(' ')[0]}
           </button>
         ))}
@@ -146,13 +163,13 @@ export function ParentSettings() {
 
         {hours.enabled && (
           <div className="space-y-4">
-            <div className="rounded-lg bg-[var(--mx-emerald-soft)]/30 p-3 flex items-center gap-3">
+            <div className="rounded-lg bg-[var(--mx-emerald-soft)]/30 p-3 flex flex-col sm:flex-row sm:items-center gap-3">
               <Sun className="h-5 w-5 text-[var(--mx-warm)] shrink-0" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium">Study window</p>
                 <p className="text-[11px] text-muted-foreground">Reminders + digests land during these hours</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Input
                   type="time"
                   value={hours.studyStart}
@@ -169,13 +186,13 @@ export function ParentSettings() {
               </div>
             </div>
 
-            <div className="rounded-lg bg-[var(--mx-clay)]/10 p-3 flex items-center gap-3">
+            <div className="rounded-lg bg-[var(--mx-clay)]/10 p-3 flex flex-col sm:flex-row sm:items-center gap-3">
               <Moon className="h-5 w-5 text-[var(--mx-clay)] shrink-0" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium">Downtime (quiet hours)</p>
                 <p className="text-[11px] text-muted-foreground">No notifications during sleep / device-free time</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <Input
                   type="time"
                   value={hours.downtimeStart}
@@ -227,7 +244,7 @@ export function ParentSettings() {
             <button
               key={tag}
               onClick={() => setFocusAreas((cur) => (cur.trim() ? `${cur}, ${tag}` : tag))}
-              className="text-[11px] bg-muted rounded-full px-2 py-0.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+              className="text-[11px] bg-muted rounded-full px-2 py-0.5 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               + {tag}
             </button>

@@ -118,10 +118,13 @@ export function ParentMessages() {
 
       {threads.length === 0 ? (
         <Card className="p-10 text-center">
-          <Mail className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary grid place-items-center mb-3">
+            <Mail className="h-7 w-7" />
+          </div>
           <p className="font-medium">No teacher conversations yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Once a teacher messages you about your kid, the thread will appear here.
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            Once a teacher messages you about your kid — a kudos, a heads-up, or a quick check-in — the
+            thread will appear here. Reply any time, no phone tag required.
           </p>
         </Card>
       ) : !activeTeacher ? (
@@ -156,7 +159,7 @@ export function ParentMessages() {
         <Card className="overflow-hidden flex flex-col h-[calc(100vh-280px)] min-h-[400px]">
           {/* header */}
           <div className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--mx-emerald-soft)]/50">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setActiveTeacher(null)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setActiveTeacher(null)} aria-label="Back to thread list">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <Avatar className="h-9 w-9">
@@ -215,7 +218,7 @@ export function ParentMessages() {
                 rows={1}
                 disabled={sending}
               />
-              <Button onClick={send} disabled={sending || !input.trim()} className="h-10 w-10 p-0 shrink-0 rounded-full">
+              <Button onClick={send} disabled={sending || !input.trim()} className="h-10 w-10 p-0 shrink-0 rounded-full" aria-label="Send message">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
