@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { streamChat, type ChatTurn } from '@/lib/ai'
+import { awardXp, touchStreak, incrementCounter } from '@/lib/gamify'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,6 +115,27 @@ ${assignmentBlock || '(none loaded)'}
         imageUrl: imageUrl ?? null,
       },
     })
+
+    // Gamification: streak + XP for chatting (non-blocking)
+    touchStreak(studentId)
+      .then(({ streakBonus }) => incrementCounter(studentId, 'totalChats').then(() => awardXp(studentId, 5 + streakBonus, { reason: 'chat' })))
+      .then((r) => {
+        if (r.leveledUp || r.unlockedAchievements.length > 0) {
+          // send a system event at end of stream so UI can celebrate
+          // (stored as a special chat message from assistant with mode null)
+          const parts: string[] = []
+          if (r.leveledUp) parts.push(`🎉 Level up! You reached **level ${r.newLevel}**! (+20 coins)`)
+          for (const a of r.unlockedAchievements) {
+            parts.push(`🏅 Achievement unlocked: **${a.name}** — ${a.desc} (+${a.coinReward} coins)`)
+          }
+          if (parts.length > 0) {
+            db.chatMessage
+              .create({ data: { studentId, role: 'assistant', content: parts.join('\n\n'), mode: 'socratic' } })
+              .catch(() => {})
+          }
+        }
+      })
+      .catch(() => {})
 
     // Stream
     const encoder = new TextEncoder()

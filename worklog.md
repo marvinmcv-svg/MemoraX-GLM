@@ -101,3 +101,43 @@ Stage Summary:
 - Voice notes feature COMPLETE: record (MediaRecorder) → ASR transcribe → fills input; TTS playback on every assistant reply (cached, toggle stop)
 - Subscription tiers COMPLETE: 4 tiers, monthly/annual toggle, feature matrix, integrated into landing
 - Full rescan PASSED: all 3 apps + landing + pricing + voice UI verified, lint clean, no runtime errors
+
+---
+Task ID: 14-21
+Agent: main (orchestrator)
+Task: Full student gamification suite — avatar/shop, streaks/XP, spaced repetition, exam prep, explain-3-ways, study groups
+
+Work Log:
+- Extended Prisma schema: StudentProfile, StudentCosmetic, Achievement, ReviewCard, ExamPlan, StudyGroup, StudyGroupMember (7 new models)
+- Built gamify.ts engine: 45-item cosmetic catalog (scenes/characters/pets/accessories, 4 rarities, level reqs), XP→level math (sqrt curve), 16 achievements with auto-check + coin rewards, streak tracking (daily activity), awardXp() with level-up bonuses
+- Built gamify-catalog.ts (client-safe mirror of catalog + level math + achievements)
+- Built Avatar component: layered emoji on themed gradients (scene decor + character + pet + accessory), 4 sizes, rarity badges
+- Wired XP into chat API (+5 + streak bonus per message) and homework API (+15 + 3 coins per scan); non-blocking, posts celebration messages on level-up/achievement
+- Built /api/student/[id]/profile (full gamification state), /cosmetics/buy (deduct coins, level-gate), /avatar (equip owned cosmetics)
+- Built Avatar & Shop tab: hero (big avatar + level ring + XP bar + coins/streak/badges/items stats), 4-sub-tab shop grid (Outfits/Pets/Accessories/Scenes) with buy/equip/locked states, achievements grid (16 badges with unlock states)
+- Built spaced repetition: /api/review (due cards), /review/generate (LLM turns memories into Q/A flashcards), /review/answer (SM-2 lite scheduling + XP). Review tab: flip cards, 4-quality answer buttons (Again/Hard/Good/Easy), session complete screen with stats
+- Built exam prep: /api/exam-plans (LLM generates multi-day study plan from memories + assignments). Exam Prep tab: create dialog, expandable plan cards with day-by-day themed tasks + time estimates
+- Built "Explain 3 ways": /api/explain-3-ways (LLM returns visual/analogy/step-by-step JSON). Added "3 ways" button on every assistant chat bubble, opens dialog with 3 explanation cards
+- Built study groups: /api/groups (list/create/join). Groups tab: my groups + available classmate groups, create dialog, join buttons, member avatars
+- Seeded demo data: Mia (L5, 1850 XP, 9 cosmetics, 8 achievements, 5-day streak, 2 review cards), Leo (L2, 320 XP, 5 cosmetics, 3 achievements, 2-day streak)
+- Fixed race condition in getOrCreateProfile (find+create → upsert) when touchStreak + awardXp run concurrently
+- Fixed Prisma skipDuplicates not supported on SQLite (removed from seed, used try/catch in getOrCreateProfile)
+- Restarted dev server after DB wipe (stale Prisma singleton connection)
+
+Agent Browser Verification:
+- ✅ Avatar & Shop: avatar renders (scientist/owl/glasses/library), L5/1850XP/120coins/5streak/8badges/9items, shop grid with all 4 types, rarity badges, level-locked items
+- ✅ Buy cosmetic: coins deducted (120→42 after buying Athlete 80coins), items increased (9→11)
+- ✅ Equip cosmetic: avatar updates on equip
+- ✅ Review: 2 due cards, flip→answer→advance, "Session complete! 2 reviewed, 2 right, +20 XP"
+- ✅ Exam Prep: LLM generated 7-day plan (Cell Structure, Mitosis Focus, Genetics, Photosynthesis...) with 3 tasks/day + time estimates
+- ✅ Explain 3 ways: dialog showed Visual (draw cells/chromosomes), Analogy (photocopies), Step-by-step
+- ✅ Study Groups: created "Algebra II Study Squad", shows in My Groups with member count
+- ✅ Chat XP: 1850→1905→1910 (+5 per message), chats 14→15→16, achievement unlocked (8→9)
+- ✅ Mobile: no horizontal overflow at 390px
+- ✅ Lint clean, no new runtime errors after race-condition fix
+
+Stage Summary:
+- ALL 5 student feature suggestions built and verified: spaced repetition, exam prep, explain-3-ways, study groups, avatar+gamification
+- Gamification engine fully wired: XP from chat/homework/review, coins, levels, streaks, 16 achievements, 45-cosmetic shop with buy/equip
+- Avatar system: layered emoji avatars with scenes/characters/pets/accessories, 4 rarities, level-gated unlocks
+- Student app now has 8 tabs (was 4): Chat, Classroom, Homework, Review, Exam Prep, Avatar & Shop, Study Groups, Memories

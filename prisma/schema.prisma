@@ -30,6 +30,15 @@ model User {
   studentReminders   Reminder[]       @relation("StudentReminders")
   studentTutorMsgs   TeacherMessage[] @relation("TeacherMessageStudent")
 
+  // gamification
+  studentProfile     StudentProfile?
+  studentCosmetics   StudentCosmetic[]
+  achievements       Achievement[]
+  reviewCards        ReviewCard[]
+  examPlans          ExamPlan[]
+  studyGroupMemberships StudyGroupMember[]
+  studyGroupsOwned   StudyGroup[]      @relation("StudyGroupOwner")
+
   teacherCourses     Course[]         @relation("TeacherCourses")
   teacherMessages    TeacherMessage[] @relation("TeacherMessageTeacher")
 
@@ -176,3 +185,104 @@ model TeacherMessage {
   teacher User   @relation("TeacherMessageTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   student User   @relation("TeacherMessageStudent", fields: [studentId], references: [id], onDelete: Cascade)
 }
+
+// ---------- Gamification: profile, cosmetics, achievements ----------
+
+model StudentProfile {
+  studentId      String    @id
+  xp             Int       @default(0)
+  coins          Int       @default(50) // starting bonus
+  streakDays     Int       @default(0)
+  lastActiveDate DateTime?
+  // counters
+  totalChats     Int       @default(0)
+  totalHomework  Int       @default(0)
+  totalReviews   Int       @default(0)
+  // avatar equipment (cosmetic ids from catalog)
+  scene          String    @default("bedroom")
+  character      String    @default("student")
+  pet            String    @default("none")
+  accessory      String    @default("none")
+  updatedAt      DateTime  @updatedAt
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StudentCosmetic {
+  id         String   @id @default(cuid())
+  studentId  String
+  cosmeticId String   // references the in-code catalog
+  unlockedAt DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, cosmeticId])
+}
+
+model Achievement {
+  id         String   @id @default(cuid())
+  studentId  String
+  key        String   // e.g. "first_chat", "streak_7", "level_5"
+  unlockedAt DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, key])
+}
+
+// ---------- Spaced repetition ----------
+
+model ReviewCard {
+  id          String   @id @default(cuid())
+  studentId   String
+  memoryId    String?
+  front       String   // prompt / question
+  back        String   // answer / explanation
+  // SM-2 lite scheduling fields
+  ease        Float    @default(2.5)
+  interval    Int      @default(1) // days
+  dueDate     DateTime @default(now())
+  repetitions Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Exam prep ----------
+
+model ExamPlan {
+  id            String   @id @default(cuid())
+  studentId     String
+  title         String
+  examDate      DateTime
+  generatedPlan String   // JSON string: [{day, date, tasks:[...]}]
+  createdAt     DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Study groups ----------
+
+model StudyGroup {
+  id          String   @id @default(cuid())
+  name        String
+  subject     String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy User                @relation("StudyGroupOwner", fields: [createdById], references: [id], onDelete: Cascade)
+  members   StudyGroupMember[]
+}
+
+model StudyGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  studentId String
+  joinedAt  DateTime @default(now())
+
+  group   StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+}
+

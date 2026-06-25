@@ -48,6 +48,49 @@ export const api = {
     jfetch<{ ok: boolean }>(`/api/teacher/message`, { method: 'POST', body: JSON.stringify(data) }),
   teacherMessages: (id: string) =>
     jfetch<{ messages: any[] }>(`/api/teacher/${id}/messages`),
+
+  // gamification
+  studentProfile: (id: string) => jfetch<any>(`/api/student/${id}/profile`),
+  buyCosmetic: (studentId: string, cosmeticId: string) =>
+    jfetch<any>(`/api/student/${studentId}/cosmetics/buy`, {
+      method: 'POST',
+      body: JSON.stringify({ cosmeticId }),
+    }),
+  equipAvatar: (studentId: string, data: any) =>
+    jfetch<any>(`/api/student/${studentId}/avatar`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  reviewDue: (studentId: string) => jfetch<any>(`/api/student/${studentId}/review`),
+  generateReview: (studentId: string) =>
+    jfetch<any>(`/api/student/${studentId}/review/generate`, { method: 'POST' }),
+  answerReview: (studentId: string, cardId: string, quality: number) =>
+    jfetch<any>(`/api/student/${studentId}/review/answer`, {
+      method: 'POST',
+      body: JSON.stringify({ cardId, quality }),
+    }),
+  examPlans: (studentId: string) => jfetch<any>(`/api/student/${studentId}/exam-plans`),
+  createExamPlan: (studentId: string, data: any) =>
+    jfetch<any>(`/api/student/${studentId}/exam-plans`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  groups: (studentId: string) => jfetch<any>(`/api/student/${studentId}/groups`),
+  createGroup: (studentId: string, data: any) =>
+    jfetch<any>(`/api/student/${studentId}/groups`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  joinGroup: (studentId: string, groupId: string) =>
+    jfetch<any>(`/api/student/${studentId}/groups/join`, {
+      method: 'POST',
+      body: JSON.stringify({ groupId }),
+    }),
+  explain3: (studentId: string, content: string) =>
+    jfetch<any>(`/api/student/${studentId}/explain-3-ways`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
 }
 
 /** Stream a tutor chat response. Calls onDelta for each chunk. Returns full text. */

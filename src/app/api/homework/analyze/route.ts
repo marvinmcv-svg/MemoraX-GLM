@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { analyzeHomeworkImage } from '@/lib/ai'
+import { awardXp, touchStreak, incrementCounter } from '@/lib/gamify'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +40,15 @@ export async function POST(req: NextRequest) {
         imageUrl: imageDataUrl,
       },
     })
+
+    // Gamification: streak + XP for homework scan (non-blocking)
+    touchStreak(studentId)
+      .then(({ streakBonus }) =>
+        incrementCounter(studentId, 'totalHomework').then(() =>
+          awardXp(studentId, 15 + streakBonus, { coins: 3, reason: 'homework' })
+        )
+      )
+      .catch(() => {})
 
     return Response.json({ analysis, memoryId: memory.id, chatMessageId: chatMsg.id })
   } catch (e: any) {

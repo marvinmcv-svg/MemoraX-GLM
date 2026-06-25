@@ -20,6 +20,13 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { useSession } from '@/lib/session'
 import { api, streamTutorChat } from '@/lib/api-client'
 import { useVoiceNotes } from '@/hooks/use-voice-notes'
@@ -51,6 +58,9 @@ export function StudentChat() {
   })
   // TTS playback for assistant replies
   const tts = useTTS()
+
+  // "Explain it 3 ways" — shows a dialog with visual/analogy/step-by-step
+  const [explainMsg, setExplainMsg] = React.useState<ChatMsgLite | null>(null)
 
   // load history
   const loadHistory = React.useCallback(async () => {
@@ -215,6 +225,7 @@ export function StudentChat() {
               ttsPlaying={tts.playingId === m.id}
               ttsLoading={tts.loading}
               onSpeak={() => tts.speak(m.id, m.content)}
+              onExplain={() => setExplainMsg(m)}
             />
           ))
         )}
@@ -357,6 +368,66 @@ export function StudentChat() {
           </button>
         </p>
       </div>
+
+      {/* Explain 3 ways dialog */}
+      {explainMsg && (
+        <Explain3WaysDialog msg={explainMsg} onOpenChange={(o) => !o && setExplainMsg(null)} />
+      )}
+    </div>
+  )
+}
+
+function Explain3WaysDialog({ msg, onOpenChange }: { msg: ChatMsgLite; onOpenChange: (o: boolean) => void }) {
+  const { user } = useSession()
+  const [loading, setLoading] = React.useState(true)
+  const [result, setResult] = React.useState<{ visual: string; analogy: string; stepByStep: string } | null>(null)
+
+  React.useEffect(() => {
+    if (!user) return
+    setLoading(true)
+    api
+      .explain3(user.id, msg.content)
+      .then((r) => setResult(r.explanations))
+      .catch(() => toast.error('Could not generate explanations'))
+      .finally(() => setLoading(false))
+  }, [user, msg.id])
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-[var(--mx-warm)]" /> Explain it 3 ways
+          </DialogTitle>
+          <DialogDescription>The same concept, explained for different learning styles.</DialogDescription>
+        </DialogHeader>
+        {loading ? (
+          <div className="py-8 flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+            <p className="text-sm text-muted-foreground">Crafting 3 explanations…</p>
+          </div>
+        ) : result ? (
+          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto scroll-thin">
+            <ExplainCard emoji="👁️" title="Visual" text={result.visual} tone="emerald" />
+            <ExplainCard emoji="🔗" title="Analogy" text={result.analogy} tone="amber" />
+            <ExplainCard emoji="📝" title="Step by step" text={result.stepByStep} tone="emerald" />
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-4 text-center">No explanations available.</p>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ExplainCard({ emoji, title, text, tone }: { emoji: string; title: string; text: string; tone: 'emerald' | 'amber' }) {
+  const bg = tone === 'emerald' ? 'bg-[var(--mx-emerald-soft)]/40' : 'bg-[var(--mx-warm-soft)]/40'
+  return (
+    <div className={cn('rounded-lg p-3', bg)}>
+      <p className="text-xs font-semibold mb-1 flex items-center gap-1.5">
+        <span>{emoji}</span> {title}
+      </p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{text || '—'}</p>
     </div>
   )
 }
@@ -366,11 +437,13 @@ function ChatBubble({
   ttsPlaying,
   ttsLoading,
   onSpeak,
+  onExplain,
 }: {
   msg: ChatMsgLite
   ttsPlaying: boolean
   ttsLoading: boolean
   onSpeak: () => void
+  onExplain: () => void
 }) {
   const me = msg.role === 'user'
   const canSpeak = !me && !!msg.content
@@ -429,24 +502,33 @@ function ChatBubble({
             </p>
           )}
           {canSpeak && (
-            <button
-              onClick={onSpeak}
-              disabled={ttsLoading}
-              className={cn(
-                'inline-flex items-center gap-1 text-[10px] rounded-full px-1.5 py-0.5 transition-colors',
-                ttsPlaying
-                  ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-muted'
-              )}
-              title={ttsPlaying ? 'Stop audio' : 'Listen to this reply'}
-            >
-              {ttsLoading ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Volume2 className={cn('h-3 w-3', ttsPlaying && 'animate-pulse')} />
-              )}
-              {ttsPlaying ? 'Stop' : 'Listen'}
-            </button>
+            <>
+              <button
+                onClick={onExplain}
+                className="inline-flex items-center gap-1 text-[10px] rounded-full px-1.5 py-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-muted transition-colors"
+                title="Explain this 3 different ways"
+              >
+                <Lightbulb className="h-3 w-3" /> 3 ways
+              </button>
+              <button
+                onClick={onSpeak}
+                disabled={ttsLoading}
+                className={cn(
+                  'inline-flex items-center gap-1 text-[10px] rounded-full px-1.5 py-0.5 transition-colors',
+                  ttsPlaying
+                    ? 'text-primary bg-primary/10'
+                    : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-muted'
+                )}
+                title={ttsPlaying ? 'Stop audio' : 'Listen to this reply'}
+              >
+                {ttsLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Volume2 className={cn('h-3 w-3', ttsPlaying && 'animate-pulse')} />
+                )}
+                {ttsPlaying ? 'Stop' : 'Listen'}
+              </button>
+            </>
           )}
         </div>
       </div>

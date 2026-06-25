@@ -336,6 +336,89 @@ export async function seedDatabase() {
     ],
   })
 
+  // ---------- Gamification: starter profiles + cosmetics ----------
+  // Mia: level ~4 (1600 XP), owns some cosmetics, 5-day streak
+  await db.studentProfile.upsert({
+    where: { studentId: mia.id },
+    update: {},
+    create: {
+      studentId: mia.id,
+      xp: 1850, // level 5 (1600) + a bit
+      coins: 120,
+      streakDays: 5,
+      lastActiveDate: new Date(),
+      totalChats: 14,
+      totalHomework: 2,
+      totalReviews: 3,
+      scene: 'library',
+      character: 'scientist',
+      pet: 'owl',
+      accessory: 'glasses',
+    },
+  })
+  const miaCosmetics = ['library', 'forest', 'scientist', 'artist', 'owl', 'fox', 'glasses', 'headphones', 'gradcap']
+  await db.studentCosmetic.createMany({
+    data: miaCosmetics.map((cid) => ({ studentId: mia.id, cosmeticId: cid })),
+  })
+  // Mia achievements
+  const miaAch = ['first_chat', 'chat_10', 'homework_1', 'review_1', 'streak_3', 'level_5', 'fresh_fit', 'collector']
+  await db.achievement.createMany({
+    data: miaAch.map((key) => ({ studentId: mia.id, key })),
+  })
+
+  // Leo: level ~2 (300 XP), owns a couple cosmetics, 2-day streak
+  await db.studentProfile.upsert({
+    where: { studentId: leo.id },
+    update: {},
+    create: {
+      studentId: leo.id,
+      xp: 320, // level 2
+      coins: 45,
+      streakDays: 2,
+      lastActiveDate: new Date(),
+      totalChats: 6,
+      totalHomework: 0,
+      totalReviews: 1,
+      scene: 'forest',
+      character: 'athlete',
+      pet: 'dog',
+      accessory: 'cap',
+    },
+  })
+  const leoCosmetics = ['forest', 'athlete', 'dog', 'cap', 'bow']
+  await db.studentCosmetic.createMany({
+    data: leoCosmetics.map((cid) => ({ studentId: leo.id, cosmeticId: cid })),
+  })
+  const leoAch = ['first_chat', 'streak_3', 'fresh_fit']
+  await db.achievement.createMany({
+    data: leoAch.map((key) => ({ studentId: leo.id, key })),
+  })
+
+  // Mia: a couple review cards from her memories
+  const miaMemories = await db.memory.findMany({ where: { studentId: mia.id }, take: 3 })
+  if (miaMemories.length > 0) {
+    await db.reviewCard.createMany({
+      data: [
+        {
+          studentId: mia.id,
+          memoryId: miaMemories[0].id,
+          front: 'What does the discriminant (b² - 4ac) tell you about a quadratic equation?',
+          back: 'Positive = two real roots, zero = one repeated root, negative = no real roots (two complex roots).',
+          dueDate: new Date(),
+        },
+        {
+          studentId: mia.id,
+          memoryId: miaMemories[1]?.id ?? null,
+          front: 'What is the AC method used for?',
+          back: 'Factoring trinomials with a leading coefficient > 1. Split the middle term using two numbers that multiply to a·c and add to b.',
+          dueDate: new Date(),
+          repetitions: 1,
+          interval: 3,
+        },
+      ],
+    })
+  }
+
   // ---------- Parent reminders (WhatsApp-style inbox) ----------
   await db.reminder.createMany({
     data: [
