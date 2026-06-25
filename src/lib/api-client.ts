@@ -107,6 +107,34 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ studentId, message }),
     }),
+
+  // teacher advanced features
+  atRiskStudents: (teacherId: string) => jfetch<any>(`/api/teacher/${teacherId}/at-risk`),
+  classHeatmap: (teacherId: string, courseId?: string) =>
+    jfetch<any>(`/api/teacher/${teacherId}/heatmap${courseId ? `?courseId=${courseId}` : ''}`),
+  conferenceReport: (teacherId: string, studentId: string) =>
+    jfetch<any>(`/api/teacher/${teacherId}/conference-report?studentId=${studentId}`),
+  lessonPlans: (teacherId: string, courseId?: string) =>
+    jfetch<any>(`/api/teacher/${teacherId}/lesson-plans${courseId ? `?courseId=${courseId}` : ''}`),
+  generateLessonPlan: (teacherId: string, courseId: string, topic?: string) =>
+    jfetch<any>(`/api/teacher/${teacherId}/lesson-plans`, {
+      method: 'POST',
+      body: JSON.stringify({ courseId, topic }),
+    }),
+  broadcastAnnouncement: (courseId: string, content: string) =>
+    jfetch<any>(`/api/teacher/course/${courseId}/broadcast`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    }),
+  assignmentInsights: (courseId: string) =>
+    jfetch<any>(`/api/teacher/course/${courseId}/insights`),
+  setCoTeacher: (courseId: string, coTeacherId: string) =>
+    jfetch<any>(`/api/teacher/course/${courseId}/co-teacher`, {
+      method: 'POST',
+      body: JSON.stringify({ coTeacherId }),
+    }),
+  removeCoTeacher: (courseId: string) =>
+    jfetch<any>(`/api/teacher/course/${courseId}/co-teacher`, { method: 'DELETE' }),
 }
 
 /** Stream a tutor chat response. Calls onDelta for each chunk. Returns full text. */

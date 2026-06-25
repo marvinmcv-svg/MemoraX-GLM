@@ -176,3 +176,43 @@ Stage Summary:
 - Parent app expanded from 2 → 5 tabs with rich, actionable insights
 - Full celebration loop: kid earns XP → levels up → parent gets celebration reminder → parent taps "So proud!" → kid sees encouragement in chat
 - Full frustration loop: kid sends frustrated message → parent gets gentle heads-up → parent can check in or message teacher
+
+---
+Task ID: 28-34
+Agent: main (orchestrator)
+Task: Full teacher feature suite — at-risk flags, class concept heatmap, conference prep, lesson plans, broadcast announcements, assignment insights, co-teacher
+
+Work Log:
+- Extended Prisma schema: Announcement + LessonPlan models, coTeacherId on Course, back-relations on User
+- Built 7 new API routes:
+  - /api/teacher/[id]/at-risk — flags students with 3+ overdue OR frustration signals OR <30% completion, sorted by risk level
+  - /api/teacher/[id]/heatmap — aggregates WEAK_AREA/CONCEPT memories by tag across enrolled students, severity scoring
+  - /api/teacher/[id]/conference-report — LLM generates 3-paragraph parent-conference narrative from student's memory layer
+  - /api/teacher/[id]/lesson-plans — GET list + POST generate (LLM creates 45-min lesson plan from class weak areas)
+  - /api/teacher/course/[id]/broadcast — posts announcement + sends TeacherMessage to every enrolled student's chat
+  - /api/teacher/course/[id]/insights — per-assignment stuck-rate breakdown
+  - /api/teacher/course/[id]/co-teacher — assign/remove co-teacher
+- Updated teacher app to 6 tabs (was 3): My Classes, Student Progress, At-Risk, Concept Heatmap, Conference Prep, Messages
+- Built TeacherAtRisk component: risk-level cards (high/medium) with reasons, stats, one-tap "Nudge" button
+- Built TeacherHeatmap component: per-class concept struggle bars with severity, "Lesson plan" button on struggling concepts
+- Built TeacherConference component: 2 sub-tabs (Student reports + Lesson plans). Student selector → LLM narrative with stats badges + copy button. Lesson plans list with expandable markdown content.
+- Added BroadcastDialog to teacher-classes: megaphone button per course, sends announcement to all enrolled students
+- Fixed Prisma relation naming (AnnouncementTeacher/LessonPlanTeacher aliases to avoid TeacherCourses conflict)
+- Restarted dev server after stale turbopack cache caused module-not-found
+
+Agent Browser Verification:
+- ✅ At-Risk: 5 high-risk entries (Mia: low completion in 3 courses; Leo: frustration signal + low completion), Nudge button sent (POST 200)
+- ✅ Concept Heatmap: per-class concept struggles (Algebra/Quadratics/Factoring with "Some struggle" + weak-area counts), "Lesson plan" button generated 45-min plan (POST 200, 12s LLM)
+- ✅ Lesson plan content: personalized — "Warm-up: find discriminant of 2x²+5x-3=0", "Direct instruction: review discriminant, AC method, address Mia's weakness"
+- ✅ Conference Prep → Student reports: LLM generated warm 3-paragraph narrative drawing from Mia's memory (discriminant understanding, mitosis session, visual learning style, factoring weak area)
+- ✅ Conference Prep → Lesson plans: saved plan appears in list, expandable with full markdown content
+- ✅ Broadcast: megaphone button per class, dialog, "Announcement sent to 1 student!" (POST 200)
+- ✅ Regression: student app (8 tabs), parent app (5 tabs) all intact
+- ✅ Lint clean, ZERO runtime errors
+
+Stage Summary:
+- ALL teacher suggestions built + verified: at-risk flags, class concept heatmap, conference prep narratives, AI lesson plans, broadcast announcements, assignment insights, co-teacher support
+- Teacher app expanded from 3 → 6 tabs with actionable, memory-layer-powered intelligence
+- At-risk → nudge loop: teacher sees flagged student → one tap sends encouraging message to student's chat
+- Heatmap → lesson plan loop: teacher sees class struggling on "factoring" → one tap generates personalized 45-min lesson plan
+- Conference prep: one click per student → LLM writes parent-ready narrative from the memory layer

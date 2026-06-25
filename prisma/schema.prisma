@@ -41,6 +41,8 @@ model User {
 
   teacherCourses     Course[]         @relation("TeacherCourses")
   teacherMessages    TeacherMessage[] @relation("TeacherMessageTeacher")
+  announcements      Announcement[]   @relation("AnnouncementTeacher")
+  lessonPlans        LessonPlan[]     @relation("LessonPlanTeacher")
 
   // parent ↔ teacher messaging
   parentMessagesSent   ParentTeacherMessage[] @relation("ParentTeacherMessageParent")
@@ -76,6 +78,7 @@ model Course {
   name        String        // e.g. "Algebra II"
   subject     String?       // e.g. "Math"
   teacherId   String
+  coTeacherId String?       // optional second teacher (co-teacher collaboration)
   color       String        @default("emerald") // tailwind color token
   room        String?
   createdAt   DateTime      @default(now())
@@ -84,6 +87,8 @@ model Course {
   enrollments  Enrollment[]
   assignments  Assignment[]
   teacherMessages TeacherMessage[]
+  announcements  Announcement[]
+  lessonPlans    LessonPlan[]
 }
 
 model Enrollment {
@@ -310,5 +315,31 @@ model ParentTeacherMessage {
   parent  User @relation("ParentTeacherMessageParent", fields: [parentId], references: [id], onDelete: Cascade)
   teacher User @relation("ParentTeacherMessageTeacher2", fields: [teacherId], references: [id], onDelete: Cascade)
 }
+
+// ---------- Teacher: announcements + lesson plans ----------
+
+model Announcement {
+  id        String   @id @default(cuid())
+  courseId  String
+  teacherId String
+  content   String
+  createdAt DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher User   @relation("AnnouncementTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+model LessonPlan {
+  id        String   @id @default(cuid())
+  courseId  String
+  teacherId String
+  topic     String
+  content   String   // markdown lesson plan
+  createdAt DateTime @default(now())
+
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teacher User   @relation("LessonPlanTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
 
 

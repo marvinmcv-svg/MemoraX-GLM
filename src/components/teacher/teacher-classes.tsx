@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Plus, Users, ClipboardList, ArrowRight, Calendar, FlaskConical, BookOpen, FileText } from 'lucide-react'
+import { Plus, Users, ClipboardList, ArrowRight, Calendar, FlaskConical, BookOpen, FileText, Megaphone, Loader2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -51,6 +51,7 @@ export function TeacherClasses({ onOpenCourse }: { onOpenCourse: (id: string) =>
   const [loading, setLoading] = React.useState(true)
   const [showNewClass, setShowNewClass] = React.useState(false)
   const [showNewAssignment, setShowNewAssignment] = React.useState<string | null>(null)
+  const [showBroadcast, setShowBroadcast] = React.useState<string | null>(null)
 
   const load = React.useCallback(async () => {
     if (!user) return
@@ -118,6 +119,7 @@ export function TeacherClasses({ onOpenCourse }: { onOpenCourse: (id: string) =>
               c={c}
               onOpen={() => onOpenCourse(c.id)}
               onAddAssignment={() => setShowNewAssignment(c.id)}
+              onBroadcast={() => setShowBroadcast(c.id)}
             />
           ))}
         </div>
@@ -143,7 +145,77 @@ export function TeacherClasses({ onOpenCourse }: { onOpenCourse: (id: string) =>
           }}
         />
       )}
+      {showBroadcast && (
+        <BroadcastDialog
+          courseId={showBroadcast}
+          courseName={courses.find((c) => c.id === showBroadcast)?.name ?? ''}
+          onOpenChange={(o) => !o && setShowBroadcast(null)}
+        />
+      )}
     </div>
+  )
+}
+
+function BroadcastDialog({
+  courseId,
+  courseName,
+  onOpenChange,
+}: {
+  courseId: string
+  courseName: string
+  onOpenChange: (o: boolean) => void
+}) {
+  const [content, setContent] = React.useState('')
+  const [sending, setSending] = React.useState(false)
+
+  const send = async () => {
+    if (!content.trim()) return
+    setSending(true)
+    try {
+      const res = await api.broadcastAnnouncement(courseId, content)
+      toast.success(`Announcement sent to ${res.recipients} student${res.recipients === 1 ? '' : 's'}!`)
+      setContent('')
+      onOpenChange(false)
+    } catch {
+      toast.error('Could not send announcement')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Megaphone className="h-4 w-4 text-primary" /> Broadcast to {courseName}
+          </DialogTitle>
+          <DialogDescription>
+            Posts an announcement and delivers it to every enrolled student&apos;s tutor chat.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <Label htmlFor="bc">Your announcement</Label>
+          <Textarea
+            id="bc"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="e.g. Reminder: Chapter 6 quiz moved to Friday! Review the factoring worksheet first."
+            rows={4}
+          />
+          <p className="text-xs text-muted-foreground">
+            Quick suggestions: 📢 &quot;Quiz moved to Friday&quot; · 📚 &quot;Don&apos;t forget lab reports&quot; · ⭐ &quot;Great class today!&quot;
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={send} disabled={sending || !content.trim()} className="gap-1.5">
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Megaphone className="h-4 w-4" />}
+            {sending ? 'Sending…' : 'Broadcast'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -151,10 +223,12 @@ function CourseCard({
   c,
   onOpen,
   onAddAssignment,
+  onBroadcast,
 }: {
   c: CourseLite
   onOpen: () => void
   onAddAssignment: () => void
+  onBroadcast: () => void
 }) {
   const colorClass = COLORS.find((x) => x.id === c.color)?.class ?? 'bg-primary'
   return (
@@ -182,8 +256,11 @@ function CourseCard({
         <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={onOpen}>
           View roster <ArrowRight className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onAddAssignment}>
-          <Plus className="h-3.5 w-3.5" /> Assignment
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onAddAssignment} title="Post assignment">
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={onBroadcast} title="Broadcast announcement">
+          <Megaphone className="h-3.5 w-3.5" />
         </Button>
       </div>
     </Card>
