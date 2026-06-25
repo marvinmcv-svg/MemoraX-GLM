@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { streamChat, type ChatTurn } from '@/lib/ai'
-import { awardXp, touchStreak, incrementCounter } from '@/lib/gamify'
+import { awardXp, touchStreak, incrementCounter, notifyFamilyOfCelebration, maybeNotifyFrustration } from '@/lib/gamify'
 
 export const dynamic = 'force-dynamic'
 
@@ -122,7 +122,6 @@ ${assignmentBlock || '(none loaded)'}
       .then((r) => {
         if (r.leveledUp || r.unlockedAchievements.length > 0) {
           // send a system event at end of stream so UI can celebrate
-          // (stored as a special chat message from assistant with mode null)
           const parts: string[] = []
           if (r.leveledUp) parts.push(`🎉 Level up! You reached **level ${r.newLevel}**! (+20 coins)`)
           for (const a of r.unlockedAchievements) {
@@ -133,9 +132,14 @@ ${assignmentBlock || '(none loaded)'}
               .create({ data: { studentId, role: 'assistant', content: parts.join('\n\n'), mode: 'socratic' } })
               .catch(() => {})
           }
+          // notify family of the celebration
+          notifyFamilyOfCelebration(studentId, r).catch(() => {})
         }
       })
       .catch(() => {})
+
+    // Frustration detection (non-blocking) — gentle parent heads-up if the student seems stuck
+    maybeNotifyFrustration(studentId, message).catch(() => {})
 
     // Stream
     const encoder = new TextEncoder()

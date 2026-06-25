@@ -42,6 +42,10 @@ model User {
   teacherCourses     Course[]         @relation("TeacherCourses")
   teacherMessages    TeacherMessage[] @relation("TeacherMessageTeacher")
 
+  // parent ↔ teacher messaging
+  parentMessagesSent   ParentTeacherMessage[] @relation("ParentTeacherMessageParent")
+  teacherMessagesRecv  ParentTeacherMessage[] @relation("ParentTeacherMessageTeacher2")
+
   familyMemberships  FamilyMember[]   @relation("FamilyMemberUser")
 }
 
@@ -159,7 +163,7 @@ model Reminder {
   id           String    @id @default(cuid())
   studentId    String
   familyId     String
-  type         String    // DAILY_DIGEST | DUE_TODAY | OVERDUE | DUE_SOON | PROGRESS_UPDATE
+  type         String    // DAILY_DIGEST | DUE_TODAY | OVERDUE | DUE_SOON | PROGRESS_UPDATE | FRUSTRATION_SIGNAL | CELEBRATION | SIBLING_MILESTONE
   title        String
   body         String
   scheduledFor DateTime
@@ -203,6 +207,10 @@ model StudentProfile {
   character      String    @default("student")
   pet            String    @default("none")
   accessory      String    @default("none")
+  // parent-set screen-time schedule (JSON: {studyStart:"16:00", studyEnd:"20:00", downtimeStart:"21:00", downtimeEnd:"07:00", enabled:true})
+  studyHours     String?
+  // parent-set focus areas / goals (comma-separated, e.g. "fractions,essay writing")
+  focusAreas     String?
   updatedAt      DateTime  @updatedAt
 
   student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -285,4 +293,22 @@ model StudyGroupMember {
 
   @@unique([groupId, studentId])
 }
+
+// ---------- Parent ↔ Teacher messaging ----------
+
+model ParentTeacherMessage {
+  id        String   @id @default(cuid())
+  parentId  String
+  teacherId String
+  studentId String?  // optional: about a specific student
+  courseId  String?  // optional: about a specific course
+  direction String   // PARENT_TO_TEACHER | TEACHER_TO_PARENT
+  content   String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  parent  User @relation("ParentTeacherMessageParent", fields: [parentId], references: [id], onDelete: Cascade)
+  teacher User @relation("ParentTeacherMessageTeacher2", fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
 

@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { BellRing, CheckCheck, Clock, AlertTriangle, TrendingUp, BookOpen, Sparkles, RefreshCw } from 'lucide-react'
+import { BellRing, CheckCheck, Clock, AlertTriangle, TrendingUp, BookOpen, Sparkles, RefreshCw, Heart } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,9 @@ const TYPE_META: Record<ReminderType, { icon: React.ElementType; color: string; 
   DUE_SOON: { icon: Clock, color: 'text-[var(--mx-warm)]', ring: 'ring-[var(--mx-warm-soft)]' },
   OVERDUE: { icon: AlertTriangle, color: 'text-[var(--mx-clay)]', ring: 'ring-[var(--mx-clay)]/30' },
   PROGRESS_UPDATE: { icon: TrendingUp, color: 'text-emerald-600', ring: 'ring-[var(--mx-emerald-soft)]' },
+  FRUSTRATION_SIGNAL: { icon: Heart, color: 'text-[var(--mx-clay)]', ring: 'ring-[var(--mx-clay)]/20' },
+  CELEBRATION: { icon: Sparkles, color: 'text-[var(--mx-warm)]', ring: 'ring-[var(--mx-warm-soft)]' },
+  SIBLING_MILESTONE: { icon: TrendingUp, color: 'text-primary', ring: 'ring-[var(--mx-emerald-soft)]' },
 }
 
 export function ParentInbox({ refreshKey }: { refreshKey: number }) {
@@ -149,9 +152,29 @@ export function ParentInbox({ refreshKey }: { refreshKey: number }) {
 }
 
 function ReminderMessage({ r, onRead }: { r: ReminderLite; onRead: () => void }) {
+  const { user } = useSession()
   const meta = TYPE_META[r.type as ReminderType] ?? TYPE_META.DAILY_DIGEST
   const Icon = meta.icon
   const unread = !r.readAt
+  const isCelebration = r.type === 'CELEBRATION'
+  const [encouraging, setEncouraging] = React.useState(false)
+
+  const encourage = async () => {
+    if (!user) return
+    setEncouraging(true)
+    try {
+      await api.parentEncourage(user.id, r.studentId)
+      toast.success(`Sent "${r.studentName.split(' ')[0]}" some love 💛`, {
+        description: "It'll appear in their tutor chat as a surprise.",
+      })
+      onRead()
+    } catch {
+      toast.error('Could not send')
+    } finally {
+      setEncouraging(false)
+    }
+  }
+
   return (
     <div className={cn('flex gap-3 msg-in', !unread && 'opacity-70')}>
       <div className="h-10 w-10 rounded-full bg-card border grid place-items-center text-lg shrink-0 shadow-sm">
@@ -178,11 +201,23 @@ function ReminderMessage({ r, onRead }: { r: ReminderLite; onRead: () => void })
           </div>
           <p className="text-sm leading-relaxed whitespace-pre-line">{r.body}</p>
         </div>
-        {unread && (
-          <button onClick={onRead} className="text-[11px] text-primary hover:underline mt-1 ml-1">
-            Mark as read
-          </button>
-        )}
+        <div className="flex items-center gap-3 mt-1 ml-1">
+          {unread && (
+            <button onClick={onRead} className="text-[11px] text-primary hover:underline">
+              Mark as read
+            </button>
+          )}
+          {isCelebration && (
+            <button
+              onClick={encourage}
+              disabled={encouraging}
+              className="text-[11px] text-[var(--mx-clay)] hover:underline flex items-center gap-1"
+            >
+              <Heart className={cn('h-3 w-3', !encouraging && 'animate-pulse')} />
+              {encouraging ? 'Sending…' : 'So proud! 💛'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

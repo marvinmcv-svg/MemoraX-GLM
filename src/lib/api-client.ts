@@ -91,6 +91,22 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content }),
     }),
+
+  // parent insights + messaging + settings
+  parentInsights: (parentId: string) => jfetch<any>(`/api/parent/${parentId}/insights`),
+  parentMessages: (parentId: string, teacherId?: string) =>
+    jfetch<any>(`/api/parent/${parentId}/messages${teacherId ? `?teacherId=${teacherId}` : ''}`),
+  sendParentMessage: (parentId: string, data: any) =>
+    jfetch<any>(`/api/parent/${parentId}/messages`, { method: 'POST', body: JSON.stringify(data) }),
+  parentSettings: (parentId: string, studentId: string) =>
+    jfetch<any>(`/api/parent/${parentId}/settings?studentId=${studentId}`),
+  updateParentSettings: (parentId: string, data: any) =>
+    jfetch<any>(`/api/parent/${parentId}/settings`, { method: 'POST', body: JSON.stringify(data) }),
+  parentEncourage: (parentId: string, studentId: string, message?: string) =>
+    jfetch<any>(`/api/parent/${parentId}/encourage`, {
+      method: 'POST',
+      body: JSON.stringify({ studentId, message }),
+    }),
 }
 
 /** Stream a tutor chat response. Calls onDelta for each chunk. Returns full text. */

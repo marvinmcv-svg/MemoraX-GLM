@@ -319,3 +319,126 @@ export async function incrementCounter(
     data: { [field]: { increment: 1 } },
   })
 }
+
+// ============================================================
+// Parent notifications: celebrations + frustration signals
+// ============================================================
+
+/**
+ * After awarding XP, notify the student's family of any level-ups or achievements.
+ * Creates CELEBRATION reminders that land in the parent inbox.
+ */
+export async function notifyFamilyOfCelebration(
+  studentId: string,
+  award: AwardResult
+): Promise<void> {
+  if (!award.leveledUp && award.unlockedAchievements.length === 0) return
+
+  // find the student's family
+  const membership = await db.familyMember.findFirst({
+    where: { userId: studentId, role: 'STUDENT' },
+  })
+  if (!membership) return
+  const familyId = membership.familyId
+
+  const student = await db.user.findUnique({ where: { id: studentId } })
+  const name = student?.name ?? 'Your child'
+
+  const parts: string[] = []
+  if (award.leveledUp && award.newLevel) {
+    parts.push(`🎉 ${name} reached **Level ${award.newLevel}**! That's real progress.`)
+  }
+  for (const a of award.unlockedAchievements) {
+    parts.push(`🏅 ${name} unlocked the **${a.name}** badge — ${a.desc.toLowerCase()}`)
+  }
+
+  await db.reminder.create({
+    data: {
+      studentId,
+      familyId,
+      type: 'CELEBRATION',
+      title: `🎉 ${name} ${award.leveledUp ? `hit Level ${award.newLevel}!` : 'earned a new badge!'}`,
+      body: parts.join('\n\n'),
+      scheduledFor: new Date(),
+      sentAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Lightweight frustration detection from a chat exchange.
+ * Returns a frustration score 0-1 and a short reason if frustrated.
+ * Uses keyword heuristics to avoid an extra LLM call on every message.
+ */
+const FRUSTRATION_KEYWORDS = [
+  "i don't get it", "i dont get it", "this is hard", "i'm confused", "im confused",
+  "i give up", "this is stupid", "i hate this", "i can't do this", "i cant do this",
+  "help me", "i'm stuck", "im stuck", "frustrated", "angry", "ugh", "argh",
+  "makes no sense", "too hard", "i'm lost", "im lost", "confusing",
+]
+
+export function detectFrustrationHeuristic(userMessage: string): { frustrated: boolean; score: number } {
+  const lower = userMessage.toLowerCase()
+  let score = 0
+  for (const kw of FRUSTRATION_KEYWORDS) {
+    if (lower.includes(kw)) score += 0.35
+  }
+  // exclamation marks + short messages often signal frustration
+  const excCount = (userMessage.match(/!/g) || []).length
+  if (excCount >= 2) score += 0.2
+  if (userMessage.trim().length < 15 && excCount >= 1) score += 0.15
+  score = Math.min(1, score)
+  return { frustrated: score >= 0.5, score }
+}
+
+/**
+ * If frustration detected, create a gentle FRUSTRATION_SIGNAL reminder for the parent.
+ */
+export async function maybeNotifyFrustration(
+  studentId: string,
+  userMessage: string
+): Promise<void> {
+  const { frustrated } = detectFrustrationHeuristic(userMessage)
+  if (!frustrated) return
+
+  const membership = await db.familyMember.findFirst({
+    where: { userId: studentId, role: 'STUDENT' },
+  })
+  if (!membership) return
+  const familyId = membership.familyId
+  const student = await db.user.findUnique({ where: { id: studentId } })
+  const name = student?.name ?? 'Your child'
+
+  await db.reminder.create({
+    data: {
+      studentId,
+      familyId,
+      type: 'FRUSTRATION_SIGNAL',
+      title: `💛 ${name} seemed stuck just now`,
+      body: `${name} sent a message that sounded a bit frustrated during tutoring. A gentle check-in or offer to help might go a long way. (This is an automated heads-up — not surveillance.)`,
+      scheduledFor: new Date(),
+      sentAt: new Date(),
+    },
+  })
+}
+
+/**
+ * Send a parent's "So proud!" encouragement as a chat message to the student.
+ */
+export async function sendParentEncouragement(
+  studentId: string,
+  parentName: string,
+  customMessage?: string
+): Promise<void> {
+  const content = customMessage?.trim() || `💬 ${parentName} sent you a message: "I'm so proud of your hard work! Keep it up 💪"`
+
+  await db.chatMessage.create({
+    data: {
+      studentId,
+      role: 'assistant',
+      content,
+      mode: 'socratic',
+    },
+  })
+}
+

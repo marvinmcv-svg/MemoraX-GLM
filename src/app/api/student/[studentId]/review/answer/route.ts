@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
-import { awardXp, incrementCounter } from '@/lib/gamify'
+import { awardXp, incrementCounter, notifyFamilyOfCelebration } from '@/lib/gamify'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +49,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ stu
   const xp = q === 0 ? 5 : q === 1 ? 5 : q === 2 ? 10 : 15
   await incrementCounter(studentId, 'totalReviews')
   const award = await awardXp(studentId, xp, { coins: 1, reason: 'review' })
+
+  // notify family of any celebrations (non-blocking)
+  notifyFamilyOfCelebration(studentId, award).catch(() => {})
 
   return Response.json({
     ok: true,

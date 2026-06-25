@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { analyzeHomeworkImage } from '@/lib/ai'
-import { awardXp, touchStreak, incrementCounter } from '@/lib/gamify'
+import { awardXp, touchStreak, incrementCounter, notifyFamilyOfCelebration } from '@/lib/gamify'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
           awardXp(studentId, 15 + streakBonus, { coins: 3, reason: 'homework' })
         )
       )
+      .then((r) => notifyFamilyOfCelebration(studentId, r).catch(() => {}))
       .catch(() => {})
 
     return Response.json({ analysis, memoryId: memory.id, chatMessageId: chatMsg.id })

@@ -463,7 +463,46 @@ export async function seedDatabase() {
         sentAt: days(-1),
         readAt: days(-1),
       },
+      {
+        studentId: mia.id,
+        familyId: family.id,
+        type: 'CELEBRATION',
+        title: '🎉 Mia hit Level 5!',
+        body: "Mia reached **Level 5** today! She's been on a 5-day streak and just unlocked the **Memory Keeper** badge. Real progress — celebrate with her! 💪",
+        scheduledFor: days(0),
+        sentAt: days(0),
+      },
+      {
+        studentId: leo.id,
+        familyId: family.id,
+        type: 'FRUSTRATION_SIGNAL',
+        title: '💛 Leo seemed stuck just now',
+        body: "Leo sent a message that sounded a bit frustrated during tutoring — he said \"i don't get it\" while working on fractions. A gentle check-in or offer to sit with him might go a long way. (This is an automated heads-up — not surveillance.)",
+        scheduledFor: days(0),
+        sentAt: days(0),
+      },
     ],
+  })
+
+  // ---------- Parent ↔ Teacher messages ----------
+  await db.parentTeacherMessage.create({
+    data: {
+      parentId: sofia.id,
+      teacherId: teacher.id,
+      studentId: mia.id,
+      direction: 'TEACHER_TO_PARENT',
+      content: "Hi Sofia! Just wanted to let you know Mia's been doing great on factoring this week. The AC method is really clicking for her now. Keep encouraging her at home! — Ms. Patel",
+    },
+  })
+  await db.parentTeacherMessage.create({
+    data: {
+      parentId: sofia.id,
+      teacherId: teacher.id,
+      studentId: leo.id,
+      direction: 'TEACHER_TO_PARENT',
+      content: "Hi Sofia, Leo seemed a little frustrated with fractions today. We'll review together at lunch tomorrow. He's making progress though — no worries! — Ms. Patel",
+      readAt: new Date(),
+    },
   })
 
   // ---------- Teacher messages ----------

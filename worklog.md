@@ -141,3 +141,38 @@ Stage Summary:
 - Gamification engine fully wired: XP from chat/homework/review, coins, levels, streaks, 16 achievements, 45-cosmetic shop with buy/equip
 - Avatar system: layered emoji avatars with scenes/characters/pets/accessories, 4 rarities, level-gated unlocks
 - Student app now has 8 tabs (was 4): Chat, Classroom, Homework, Review, Exam Prep, Avatar & Shop, Study Groups, Memories
+
+---
+Task ID: 22-27
+Agent: main (orchestrator)
+Task: Full parent feature suite — gamification insights, mood signals, celebrations, sibling comparison, parent-teacher messaging, screen-time settings, "So proud!" encouragement
+
+Work Log:
+- Extended Prisma schema: ParentTeacherMessage model (bidirectional parent↔teacher), studyHours + focusAreas fields on StudentProfile, new Reminder types (FRUSTRATION_SIGNAL, CELEBRATION, SIBLING_MILESTONE)
+- Built gamify.ts helpers: notifyFamilyOfCelebration (creates CELEBRATION reminders on level-up/achievement), detectFrustrationHeuristic (keyword-based sentiment), maybeNotifyFrustration (gentle parent heads-up), sendParentEncouragement ("So proud!" → kid's chat)
+- Wired into chat API: frustration detection on every user message + celebration notification on level-up/achievement. Also wired into homework + review answer routes.
+- Built 5 new API routes:
+  - /api/parent/[id]/insights — per-student gamification (avatar, level, XP, streak, badges, recent achievements), mood signals, recent topics, recent celebrations, sibling comparison
+  - /api/parent/[id]/messages — thread list + full conversation + parent-to-teacher send
+  - /api/parent/[id]/settings — get/set studyHours + focusAreas (family-verified)
+  - /api/parent/[id]/encourage — "So proud!" sends encouragement to kid's tutor chat
+- Updated parent app to 5 tabs (was 2): Inbox, Insights, Family, Messages, Settings
+- Built ParentInsights component: per-student cards (avatar + level ring + XP bar + stat chips + recent badges + mood signals + recent topics + recent wins + "Send some love" button), sibling comparison section
+- Built ParentMessages component: WhatsApp-style thread list → conversation view with composer
+- Built ParentSettings component: student selector, screen-time schedule (study window + downtime toggle with time inputs), focus areas with quick-add tags
+- Updated ParentInbox: added CELEBRATION + FRUSTRATION_SIGNAL types with icons/rings, "So proud! 💛" button on celebration reminders
+- Seeded: CELEBRATION reminder (Mia hit Level 5), FRUSTRATION_SIGNAL (Leo stuck on fractions), 2 parent-teacher messages from Ms. Patel
+
+Agent Browser Verification:
+- ✅ Inbox: celebration ("🎉 Mia hit Level 5!") + frustration signal ("💛 Leo seemed stuck") + "So proud! 💛" button on celebrations
+- ✅ Insights: both kids' avatars (Mia: scientist/owl/glasses/library L5; Leo: athlete/dog/cap/forest L2), XP bars, stat chips, recent badges, mood signals, recent topics, recent wins, sibling comparison ("Mia ahead on XP 1850 vs 320, longer streak 5d vs 2d, different grades")
+- ✅ "Send some love" encouragement: API 200, message appeared in Mia's tutor chat ("Sofia sent you a message: I'm so proud...")
+- ✅ Messages: thread list with Ms. Patel, conversation view with 2 teacher messages, parent reply sent (POST 200), appeared in thread
+- ✅ Settings: student selector, screen-time toggle (off→on reveals study window + downtime), focus areas with quick-add tags, save (POST 200)
+- ✅ Lint clean, ZERO runtime errors
+
+Stage Summary:
+- ALL parent suggestions built + verified: gamification view, mood/frustration signals, reward moments ("So proud!"), sibling comparison, parent-teacher messaging, screen-time scheduling
+- Parent app expanded from 2 → 5 tabs with rich, actionable insights
+- Full celebration loop: kid earns XP → levels up → parent gets celebration reminder → parent taps "So proud!" → kid sees encouragement in chat
+- Full frustration loop: kid sends frustrated message → parent gets gentle heads-up → parent can check in or message teacher

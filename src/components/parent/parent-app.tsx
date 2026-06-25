@@ -4,22 +4,29 @@ import * as React from 'react'
 import { AppHeader } from '@/components/shared/app-header'
 import { ParentInbox } from '@/components/parent/parent-inbox'
 import { ParentFamily } from '@/components/parent/parent-family'
+import { ParentInsights } from '@/components/parent/parent-insights'
+import { ParentMessages } from '@/components/parent/parent-messages'
+import { ParentSettings } from '@/components/parent/parent-settings'
 import { useSession } from '@/lib/session'
 import type { ParentTab } from '@/lib/types'
-import { BellRing, Users, Sparkles } from 'lucide-react'
+import { BellRing, Users, Sparkles, MessageSquare, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { api } from '@/lib/api-client'
 import { toast } from 'sonner'
 
 const TABS: { id: ParentTab; label: string; icon: React.ElementType }[] = [
-  { id: 'inbox', label: 'Reminder Inbox', icon: BellRing },
-  { id: 'family', label: 'Family Bundle', icon: Users },
+  { id: 'inbox', label: 'Inbox', icon: BellRing },
+  { id: 'insights', label: 'Insights', icon: Sparkles },
+  { id: 'family', label: 'Family', icon: Users },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ]
+
+export type ExtendedParentTab = ParentTab | 'insights' | 'messages' | 'settings'
 
 export function ParentApp() {
   const { user } = useSession()
-  const [tab, setTab] = React.useState<ParentTab>('inbox')
+  const [tab, setTab] = React.useState<ExtendedParentTab>('inbox')
   const [generating, setGenerating] = React.useState(false)
   const [refreshKey, setRefreshKey] = React.useState(0)
 
@@ -58,16 +65,16 @@ export function ParentApp() {
         }
       />
       <main className="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 flex flex-col">
-        <nav className="flex items-center gap-1 mb-4">
+        <nav className="flex items-center gap-1 mb-4 overflow-x-auto scroll-thin -mx-1 px-1 pb-1">
           {TABS.map((t) => {
             const Icon = t.icon
             const active = tab === t.id
             return (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id)}
+                onClick={() => setTab(t.id as ExtendedParentTab)}
                 className={cn(
-                  'flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors',
+                  'flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors',
                   active
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -91,7 +98,10 @@ export function ParentApp() {
         </nav>
 
         {tab === 'inbox' && <ParentInbox refreshKey={refreshKey} />}
+        {tab === 'insights' && <ParentInsights />}
         {tab === 'family' && <ParentFamily />}
+        {tab === 'messages' && <ParentMessages />}
+        {tab === 'settings' && <ParentSettings />}
       </main>
     </div>
   )
