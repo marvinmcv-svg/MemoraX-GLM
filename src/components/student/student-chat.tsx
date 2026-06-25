@@ -8,8 +8,11 @@ import {
   Lightbulb,
   Eye,
   Mic,
+  Square,
   Sparkles,
   Brain,
+  Volume2,
+  Loader2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
@@ -19,6 +22,8 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { useSession } from '@/lib/session'
 import { api, streamTutorChat } from '@/lib/api-client'
+import { useVoiceNotes } from '@/hooks/use-voice-notes'
+import { useTTS } from '@/hooks/use-tts'
 import type { ChatMsgLite, TutorMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -35,6 +40,17 @@ export function StudentChat() {
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const abortRef = React.useRef<AbortController | null>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
+
+  // voice notes (record → ASR → fill input)
+  const voice = useVoiceNotes({
+    onTranscribed: (text) => {
+      setInput((cur) => (cur.trim() ? `${cur} ${text}` : text))
+      toast.success('Voice note transcribed ✓')
+    },
+    onError: (m) => toast.error(m),
+  })
+  // TTS playback for assistant replies
+  const tts = useTTS()
 
   // load history
   const loadHistory = React.useCallback(async () => {
@@ -192,7 +208,15 @@ export function StudentChat() {
         ) : messages.length === 0 ? (
           <EmptyState />
         ) : (
-          messages.map((m) => <ChatBubble key={m.id} msg={m} />)
+          messages.map((m) => (
+            <ChatBubble
+              key={m.id}
+              msg={m}
+              ttsPlaying={tts.playingId === m.id}
+              ttsLoading={tts.loading}
+              onSpeak={() => tts.speak(m.id, m.content)}
+            />
+          ))
         )}
       </div>
 
@@ -219,6 +243,46 @@ export function StudentChat() {
         )}
       </AnimatePresence>
 
+      {/* Voice recording indicator */}
+      <AnimatePresence>
+        {voice.recording && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="border-t bg-[var(--mx-clay)]/10 px-4 py-2"
+          >
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--mx-clay)] opacity-75 animate-ping" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-[var(--mx-clay)]" />
+              </span>
+              <span className="text-sm font-medium text-[var(--mx-clay)]">
+                Recording… {Math.floor(voice.seconds / 60)}:{String(voice.seconds % 60).padStart(2, '0')}
+              </span>
+              <div className="flex-1" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={voice.cancel}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" className="gap-1.5 bg-[var(--mx-clay)] hover:bg-[var(--mx-clay)]/90" onClick={voice.stop}>
+                <Square className="h-3.5 w-3.5" /> Stop & transcribe
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {voice.transcribing && (
+        <div className="border-t bg-muted/40 px-4 py-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Transcribing your voice note…
+        </div>
+      )}
+
       {/* Composer */}
       <div className="border-t bg-card px-3 sm:px-4 py-3">
         <div className="flex items-end gap-2">
@@ -228,25 +292,42 @@ export function StudentChat() {
             size="icon"
             className="h-9 w-9 shrink-0"
             onClick={() => fileRef.current?.click()}
-            disabled={streaming}
+            disabled={streaming || voice.recording || voice.transcribing}
             aria-label="Attach homework photo"
           >
             <ImageIcon className="h-4.5 w-4.5" />
           </Button>
           <Button
-            variant="ghost"
+            variant={voice.recording ? 'default' : 'ghost'}
             size="icon"
-            className="h-9 w-9 shrink-0 hidden sm:inline-flex"
-            onClick={() => toast('Voice notes are coming soon 🎙️ — for now, type your question!')}
-            aria-label="Record voice note"
+            className={cn(
+              'h-9 w-9 shrink-0',
+              voice.recording && 'bg-[var(--mx-clay)] hover:bg-[var(--mx-clay)]/90 animate-pulse'
+            )}
+            onClick={() => (voice.recording ? voice.stop() : voice.record())}
+            disabled={streaming || voice.transcribing}
+            aria-label={voice.recording ? 'Stop recording' : 'Record voice note'}
+            title={voice.recording ? 'Stop recording' : 'Record a voice note'}
           >
-            <Mic className="h-4.5 w-4.5" />
+            {voice.transcribing ? (
+              <Loader2 className="h-4.5 w-4.5 animate-spin" />
+            ) : voice.recording ? (
+              <Square className="h-4 w-4" />
+            ) : (
+              <Mic className="h-4.5 w-4.5" />
+            )}
           </Button>
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={mode === 'socratic' ? 'Ask your tutor anything… (Shift+Enter for new line)' : 'Describe the problem you want solved…'}
+            placeholder={
+              voice.transcribing
+                ? 'Transcribing…'
+                : mode === 'socratic'
+                ? 'Ask your tutor anything… (Shift+Enter for new line)'
+                : 'Describe the problem you want solved…'
+            }
             className="flex-1 min-h-[40px] max-h-32 resize-none bg-muted/40 border-0 focus-visible:ring-1 focus-visible:ring-primary"
             disabled={streaming}
             rows={1}
@@ -280,10 +361,21 @@ export function StudentChat() {
   )
 }
 
-function ChatBubble({ msg }: { msg: ChatMsgLite }) {
+function ChatBubble({
+  msg,
+  ttsPlaying,
+  ttsLoading,
+  onSpeak,
+}: {
+  msg: ChatMsgLite
+  ttsPlaying: boolean
+  ttsLoading: boolean
+  onSpeak: () => void
+}) {
   const me = msg.role === 'user'
+  const canSpeak = !me && !!msg.content
   return (
-    <div className={cn('flex msg-in', me ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex msg-in group', me ? 'justify-end' : 'justify-start')}>
       <div className="max-w-[85%] sm:max-w-[75%]">
         {msg.imageUrl && (
           <div className={cn('mb-1', me ? 'flex justify-end' : 'flex justify-start')}>
@@ -330,11 +422,33 @@ function ChatBubble({ msg }: { msg: ChatMsgLite }) {
             </div>
           )}
         </div>
-        {!me && msg.mode && (
-          <p className="text-[10px] text-muted-foreground mt-1 ml-1">
-            {msg.mode === 'solution' ? '👁️ solution mode' : '💡 socratic mode'}
-          </p>
-        )}
+        <div className={cn('flex items-center gap-2 mt-1 ml-1', me ? 'justify-end' : 'justify-start')}>
+          {!me && msg.mode && (
+            <p className="text-[10px] text-muted-foreground">
+              {msg.mode === 'solution' ? '👁️ solution mode' : '💡 socratic mode'}
+            </p>
+          )}
+          {canSpeak && (
+            <button
+              onClick={onSpeak}
+              disabled={ttsLoading}
+              className={cn(
+                'inline-flex items-center gap-1 text-[10px] rounded-full px-1.5 py-0.5 transition-colors',
+                ttsPlaying
+                  ? 'text-primary bg-primary/10'
+                  : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground hover:bg-muted'
+              )}
+              title={ttsPlaying ? 'Stop audio' : 'Listen to this reply'}
+            >
+              {ttsLoading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Volume2 className={cn('h-3 w-3', ttsPlaying && 'animate-pulse')} />
+              )}
+              {ttsPlaying ? 'Stop' : 'Listen'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -21,6 +21,7 @@ import { ThemeToggle } from '@/components/brand/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Pricing } from '@/components/landing/pricing'
 import { useSession } from '@/lib/session'
 import { api } from '@/lib/api-client'
 import type { SafeUser } from '@/lib/types'
@@ -65,6 +66,7 @@ export function Landing() {
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
             <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
             <a href="#roles" className="hover:text-foreground transition-colors">For families</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
             <a href="#trust" className="hover:text-foreground transition-colors">Why MemoraX</a>
           </nav>
           <div className="flex items-center gap-2">
@@ -303,6 +305,9 @@ export function Landing() {
           </RoleCard>
         </div>
       </section>
+
+      {/* Pricing */}
+      <Pricing />
 
       {/* Trust */}
       <section id="trust" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 w-full">

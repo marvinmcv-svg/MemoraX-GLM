@@ -79,3 +79,25 @@ Stage Summary:
 - 3 bugs found & fixed via Agent Browser: (1) streaming ReadableStream parsing, (2) family route deep-include, (3) teacher messages course relation
 - Responsive, dark-mode, sticky-footer all confirmed
 - App is production-ready for demo
+
+---
+Task ID: 10-11-12
+Agent: main (orchestrator)
+Task: Voice notes (ASR+TTS), subscription tiers, full rescan
+
+Work Log:
+- Loaded ASR + TTS skills for exact z-ai SDK API
+- Built /api/asr (base64 audio → text via zai.audio.asr.create) and /api/tts (text → WAV via zai.audio.tts.create, returns audio/wav binary)
+- Verified round-trip directly: TTS generated "Hello Mia, lets work on quadratic equations" → ASR transcribed back "Hello, Mia. Let us work on quadratic equations today." ✓
+- Built useVoiceNotes hook (MediaRecorder → base64 → /api/asr → fills input) and useTTS hook (fetch /api/tts → blob URL → Audio playback, cached per message id)
+- Wired into student chat: mic button toggles record/stop, red recording indicator with timer + cancel, transcribing spinner, "Listen"/"Stop" button on each assistant bubble (appears on hover, primary when playing)
+- Built Pricing component: 4 tiers (Starter free, Scholar $7.99, Family $19.99, Educator $12.99) with monthly/annual toggle (25% off annual), feature matrix with check/x, "MOST POPULAR" badge on Scholar, FAQ row, "every plan includes" strip
+- Added Pricing section to landing between role-selection and trust, added "Pricing" nav link
+- Agent Browser verified: pricing renders all 4 tiers, toggle switches prices (Scholar $7.99→$5.99, etc.), CTA fires toast
+- Verified voice UI: "Record voice note" mic button present, "Listen" buttons on all assistant messages, TTS API returned 200 (2s generation)
+- Regression scan: student chat/classroom/memories, parent inbox/family, teacher classes — all still working, no new errors
+
+Stage Summary:
+- Voice notes feature COMPLETE: record (MediaRecorder) → ASR transcribe → fills input; TTS playback on every assistant reply (cached, toggle stop)
+- Subscription tiers COMPLETE: 4 tiers, monthly/annual toggle, feature matrix, integrated into landing
+- Full rescan PASSED: all 3 apps + landing + pricing + voice UI verified, lint clean, no runtime errors
