@@ -9,10 +9,11 @@ import { ParentMessages } from '@/components/parent/parent-messages'
 import { ParentSettings } from '@/components/parent/parent-settings'
 import { useSession } from '@/lib/session'
 import type { ParentTab } from '@/lib/types'
-import { BellRing, Users, Sparkles, MessageSquare, Settings } from 'lucide-react'
+import { BellRing, Users, Sparkles, MessageSquare, Settings, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ParentBilling } from '@/components/payments/parent-billing'
 
 const TABS: { id: ParentTab; label: string; icon: React.ElementType }[] = [
   { id: 'inbox', label: 'Inbox', icon: BellRing },
@@ -20,9 +21,10 @@ const TABS: { id: ParentTab; label: string; icon: React.ElementType }[] = [
   { id: 'family', label: 'Family', icon: Users },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'billing', label: 'Plan & Facturación', icon: CreditCard },
 ]
 
-export type ExtendedParentTab = ParentTab | 'insights' | 'messages' | 'settings'
+export type ExtendedParentTab = ParentTab | 'insights' | 'messages' | 'settings' | 'billing'
 
 export function ParentApp() {
   const { user } = useSession()
@@ -102,6 +104,7 @@ export function ParentApp() {
         {tab === 'family' && <ParentFamily />}
         {tab === 'messages' && <ParentMessages />}
         {tab === 'settings' && <ParentSettings />}
+        {tab === 'billing' && <ParentBilling />}
       </main>
     </div>
   )

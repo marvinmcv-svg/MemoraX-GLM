@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { createCheckoutSession } from '@/lib/payments/stripe'
+import type { PlanId, BillingCycle } from '@/lib/payments'
+
+export const dynamic = 'force-dynamic'
+
+// POST /api/payments/checkout
+// body: { userId, plan, cycle, successUrl?, cancelUrl? }
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => null)
+    if (!body) return NextResponse.json({ error: 'invalid body' }, { status: 400 })
+
+    const userId = String(body.userId ?? '')
+    const plan = String(body.plan ?? '') as PlanId
+    const cycle = String(body.cycle ?? 'monthly') as BillingCycle
+
+    if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
+    if (!['scholar', 'family', 'educator'].includes(plan)) {
+      return NextResponse.json({ error: 'invalid plan' }, { status: 400 })
+    }
+    if (!['monthly', 'annual'].includes(cycle)) {
+      return NextResponse.json({ error: 'invalid cycle' }, { status: 400 })
+    }
+
+    const user = await db.user.findUnique({ where: { id: userId } })
+    if (!user) return NextResponse.json({ error: 'user not found' }, { status: 404 })
+
+    const origin = new URL(req.url).origin
+    const result = await createCheckoutSession({
+      userId,
+      plan,
+      cycle,
+      successUrl: body.successUrl ?? `${origin}/?payment=success`,
+      cancelUrl: body.cancelUrl ?? `${origin}/?payment=cancelled`,
+    })
+
+    return NextResponse.json(result)
+  } catch (e: any) {
+    console.error('[payments/checkout] error', e)
+    return NextResponse.json({ error: e?.message ?? 'unknown' }, { status: 500 })
+  }
+}

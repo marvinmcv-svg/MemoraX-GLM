@@ -347,3 +347,44 @@ Stage Summary:
 - UI polished (empty states, skeletons, hover/focus, a11y, dark mode contrast)
 - Zero lint errors, zero runtime errors, zero console errors
 - App is production-ready for demo
+
+---
+Task ID: BOLIVIA-PAYMENTS
+Agent: main (orchestrator)
+Task: Bolivia payment system — Stripe + bank QR + Tigo Money in BOB
+
+Work Log:
+- Schema: added Subscription (plan/status/cycle/currentPeriodEnd) + Payment (provider/amountBob/status/reference/payerNote) models with User back-relations. db:push applied.
+- Payments lib (split for client/server safety):
+  - src/lib/payments/index.ts — client-safe: PlanId/BillingCycle types, PLAN_PRICES_BOB (55/139/89 Bs monthly, 39/99/69 annual), PLAN_NAMES, formatBOB(), priceForCycle()
+  - src/lib/payments/server.ts — server-only: createPendingPayment(), confirmPayment(), generateReference(), MERCHANT_BANK, TIGO_MERCHANT
+  - src/lib/payments/stripe.ts — Stripe Checkout session creation, graceful demo mode when STRIPE_SECRET_KEY absent
+  - src/lib/payments/qr.ts — Bolivian bank QR (QR Interbancario) via qrcode lib, EMV-style payload with merchant CI/account/amount/reference
+  - src/lib/payments/tigo.ts — Tigo Money: USSD code (*555*1*...), deep link, 6-step Spanish instructions
+- API routes (7):
+  - POST /api/payments/checkout — Stripe session (demo URL when no key)
+  - POST /api/payments/qr — generate QR + reference
+  - POST /api/payments/tigo — generate Tigo payment + instructions
+  - POST /api/payments/confirm — "Ya pagué" for QR/Tigo (creates pending → paid, activates subscription)
+  - GET /api/payments/status/[id] — poll payment status
+  - GET /api/payments/billing?userId= — current sub + payment history
+  - POST /api/stripe/webhook — Stripe webhook (verified when STRIPE_WEBHOOK_SECRET set, demo-parse otherwise)
+- UI:
+  - CheckoutDialog: 3 tabs (Tarjeta / QR Bancario / Tigo Money), fully Spanish, BOB amounts, copy-to-clipboard for account/reference, step-by-step instructions, "Ya pagué" confirmation with payer-note field
+  - Pricing component: converted to BOB (Bs/mes), Spanish copy, added Bolivia payment badges, wired CTAs to open checkout dialog (requires logged-in user)
+  - ParentBilling: new "Plan & Facturación" tab in parent app — current plan + status + renewal date, upgrade cards, payment history table (date/method/reference/amount/status), reloads after successful payment
+- Verification (curl, full loop):
+  - QR create → 200, returns paymentId + reference MX-QR-XXXX + qrDataUrl (base64 PNG) + merchant bank details
+  - Tigo create → 200, returns reference MX-TG-XXXX + USSD code + 6 Spanish instructions + merchant number
+  - Stripe checkout → 200, returns demo redirect URL (no STRIPE_SECRET_KEY)
+  - Confirm "Ya pagué" → 200, payment status pending→paid, subscription trialing→active, periodEnd extended
+  - Billing → 200, returns subscription (family/active) + payment history with paid status
+  - lint clean, payment code tsc-clean (0 errors in src/lib/payments, src/app/api/payments, src/components/payments)
+
+Stage Summary:
+- Three Bolivia-first payment providers live: Stripe (cards), QR Bancario (interbancario), Tigo Money
+- All amounts in BOB (bolivianos), all UI in Spanish
+- Full subscription lifecycle: pending → paid → active subscription with renewal date
+- Stripe works in demo mode (no keys required) and upgrades to live mode when STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET are set
+- QR + Tigo use a manual "Ya pagué" confirmation flow (production: would poll bank API / Tigo webhook)
+- Pricing page + new "Plan & Facturación" tab in parent app wired to the checkout dialog

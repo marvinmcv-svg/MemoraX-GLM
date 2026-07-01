@@ -16,6 +16,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useSession } from '@/lib/session'
+import { CheckoutDialog } from '@/components/payments/checkout-dialog'
+import { PLAN_PRICES_BOB, PLAN_NAMES, type PlanId, type BillingCycle } from '@/lib/payments'
 
 type Billing = 'monthly' | 'annual'
 
@@ -150,30 +153,47 @@ const ACCENTS = {
 
 export function Pricing({ onCta }: { onCta?: (tier: string) => void }) {
   const [billing, setBilling] = React.useState<Billing>('monthly')
+  const { user } = useSession()
+  const [checkout, setCheckout] = React.useState<{ plan: PlanId; cycle: BillingCycle } | null>(null)
 
   const handleCta = (tier: Tier) => {
     onCta?.(tier.id)
     if (tier.id === 'free') {
-      toast('The free Starter plan is active in this demo — just pick a role to explore!', {
-        description: 'All features are unlocked here so you can try everything.',
+      toast('El plan Starter gratis está activo en este demo — ¡elige un rol para explorar!', {
+        description: 'Todas las funciones están desbloqueadas para que pruebes todo.',
       })
-    } else {
-      toast(`${tier.name} plan selected`, {
-        description: `In production this would start your ${billing} subscription ($${billing === 'monthly' ? tier.monthly : tier.annual}/mo).`,
-      })
+      return
     }
+    if (!user) {
+      toast('Elige un rol de usuario primero para suscribirte.', {
+        description: 'Toca una tarjeta de rol arriba (estudiante, padre o profesor).',
+      })
+      return
+    }
+    setCheckout({ plan: tier.id as PlanId, cycle: billing as BillingCycle })
   }
 
   return (
     <section id="pricing" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 w-full">
       <div className="text-center max-w-2xl mx-auto mb-10">
         <Badge variant="secondary" className="mb-3 gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" /> Pricing
+          <Sparkles className="h-3.5 w-3.5 text-[var(--mx-accent)]" /> Precios en bolivianos
         </Badge>
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Simple plans that grow with you</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Planes simples que crecen contigo</h2>
         <p className="mt-3 text-muted-foreground">
-          Start free, upgrade when you&apos;re ready. Families save more, teachers learn free.
+          Empieza gratis, mejora cuando estés listo. Las familias ahorran más, los profesores aprenden gratis.
         </p>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
+            💳 Tarjeta (Stripe)
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
+            📲 QR Bancario
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-border/60 px-2.5 py-1">
+            📱 Tigo Money
+          </span>
+        </div>
       </div>
 
       {/* Billing toggle */}
@@ -236,10 +256,22 @@ export function Pricing({ onCta }: { onCta?: (tier: string) => void }) {
 
       {/* FAQ-ish row */}
       <div className="grid sm:grid-cols-3 gap-4 mt-6">
-        <FaqItem q="Is there a free option for teachers?" a="Yes — verified school teachers get Educator free forever. Just sign up with your school email." />
-        <FaqItem q="Can I switch plans later?" a="Anytime. Upgrades take effect immediately; downgrades at the end of your billing cycle." />
-        <FaqItem q="What about student privacy?" a="Student data never leaves the family + classroom circle. No ads, no selling data, ever." />
+        <FaqItem q="¿Hay opción gratis para profesores?" a="Sí — los profesores verificados con email escolar tienen Educator gratis para siempre." />
+        <FaqItem q="¿Puedo cambiar de plan después?" a="Cuando quieras. Mejoras inmediatas; bajadas de plan al final del ciclo." />
+        <FaqItem q="¿Qué pagos aceptan en Bolivia?" a="Tarjeta internacional (Stripe), QR bancario interbancario y Tigo Money. Todo en bolivianos." />
       </div>
+
+      {checkout && user && (
+        <CheckoutDialog
+          open
+          onOpenChange={(o) => !o && setCheckout(null)}
+          userId={user.id}
+          plan={checkout.plan}
+          cycle={checkout.cycle}
+          amountBob={checkout.cycle === 'annual' ? PLAN_PRICES_BOB[checkout.plan].annual : PLAN_PRICES_BOB[checkout.plan].monthly}
+          planName={PLAN_NAMES[checkout.plan]}
+        />
+      )}
     </section>
   )
 }
@@ -257,7 +289,10 @@ function TierCard({
 }) {
   const a = ACCENTS[tier.accent]
   const Icon = tier.icon
-  const price = billing === 'monthly' ? tier.monthly : tier.annual
+  const planId = tier.id as PlanId
+  const bobCents = billing === 'monthly' ? PLAN_PRICES_BOB[planId].monthly : PLAN_PRICES_BOB[planId].annual
+  const bobDisplay = (bobCents / 100).toFixed(bobCents % 100 === 0 ? 0 : 2)
+  const annualTotal = (PLAN_PRICES_BOB[planId].annual * 12 / 100).toFixed(0)
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -274,7 +309,7 @@ function TierCard({
       >
         {tier.popular && (
           <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-            MOST POPULAR
+            MÁS POPULAR
           </div>
         )}
         <div className={cn('h-11 w-11 rounded-xl grid place-items-center mb-4', a.icon)}>
@@ -285,15 +320,16 @@ function TierCard({
 
         <div className="mb-4">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold">${price.toFixed(2)}</span>
-            <span className="text-xs text-muted-foreground">/mo</span>
+            <span className="text-3xl font-bold">{bobDisplay}</span>
+            <span className="text-sm text-muted-foreground">Bs</span>
+            <span className="text-xs text-muted-foreground ml-0.5">/mes</span>
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             {tier.monthly === 0
               ? tier.note
               : billing === 'annual'
-              ? `billed annually ($${(tier.annual * 12).toFixed(2)}/yr)`
-              : 'billed monthly'}
+              ? `facturado anual (${annualTotal} Bs/año)`
+              : 'facturado mensual'}
           </p>
         </div>
 

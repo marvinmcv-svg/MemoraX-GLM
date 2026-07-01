@@ -9,7 +9,7 @@ export type View =
   | 'teacher'
 
 export type StudentTab = 'chat' | 'classroom' | 'homework' | 'memories' | 'review' | 'exam' | 'avatar' | 'groups'
-export type ParentTab = 'inbox' | 'progress' | 'family' | 'insights' | 'messages' | 'settings'
+export type ParentTab = 'inbox' | 'progress' | 'family' | 'insights' | 'messages' | 'settings' | 'billing'
 export type TeacherTab = 'classes' | 'progress' | 'messages'
 
 export type AssignmentType = 'HOMEWORK' | 'QUIZ' | 'PROJECT' | 'ESSAY' | 'READING'

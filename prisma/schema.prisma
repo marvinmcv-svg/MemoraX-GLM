@@ -49,6 +49,10 @@ model User {
   teacherMessagesRecv  ParentTeacherMessage[] @relation("ParentTeacherMessageTeacher2")
 
   familyMemberships  FamilyMember[]   @relation("FamilyMemberUser")
+
+  // payments
+  subscriptions  Subscription[] @relation("UserSubscriptions")
+  payments       Payment[]       @relation("UserPayments")
 }
 
 // ---------- Family Bundles (up to 2 parents + N students) ----------
@@ -339,6 +343,56 @@ model LessonPlan {
 
   course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   teacher User   @relation("LessonPlanTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// Payments & subscriptions
+// Supports three providers for the Bolivia launch:
+//   - STRIPE   (international cards, charged in BOB)
+//   - QR       (Bolivian bank QR interbancario — user scans, pays in their bank app)
+//   - TIGO     (Tigo Money mobile wallet)
+// All money amounts are stored in BOB (Bolivian Boliviano) as integer cents
+// to avoid floating-point issues (e.g. 139.90 BOB -> 13990).
+// ============================================================
+
+model Subscription {
+  id               String   @id @default(cuid())
+  userId           String   // the paying user (parent or educator)
+  plan             String   // free | scholar | family | educator
+  status           String   // trialing | active | past_due | canceled | expired
+  cycle            String   // monthly | annual
+  currentPeriodEnd DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user     User       @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([userId])
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  subscriptionId String?
+  userId         String   // payer
+  provider       String   // stripe | qr | tigo
+  amountBob      Int      // BOB cents (e.g. 13990 = 139.90 BOB)
+  status         String   // pending | paid | failed | refunded
+  // provider-specific reference:
+  //   stripe -> checkout session id / payment intent id
+  //   qr     -> the QR payment reference code (interbancario)
+  //   tigo   -> the Tigo Money transaction reference
+  reference      String?
+  // what the user typed when they confirmed (for manual verification fallback)
+  payerNote      String?
+  createdAt      DateTime @default(now())
+  confirmedAt    DateTime?
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  user         User          @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 
