@@ -9,22 +9,24 @@ import { TeacherAtRisk } from '@/components/teacher/teacher-at-risk'
 import { TeacherHeatmap } from '@/components/teacher/teacher-heatmap'
 import { TeacherConference } from '@/components/teacher/teacher-conference'
 import { useSession } from '@/lib/session'
+import { useT } from '@/lib/i18n'
 import { LayoutGrid, Users, MessageSquare, AlertTriangle, Flame, FileText, Megaphone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Tab = 'classes' | 'progress' | 'messages' | 'at-risk' | 'heatmap' | 'conference'
 
-const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'classes', label: 'My Classes', icon: LayoutGrid },
-  { id: 'progress', label: 'Student Progress', icon: Users },
-  { id: 'at-risk', label: 'At-Risk', icon: AlertTriangle },
-  { id: 'heatmap', label: 'Concept Heatmap', icon: Flame },
-  { id: 'conference', label: 'Conference Prep', icon: FileText },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
+const TABS: { id: Tab; labelKey: string; icon: React.ElementType }[] = [
+  { id: 'classes', labelKey: 'teacher.tab.classes', icon: LayoutGrid },
+  { id: 'progress', labelKey: 'teacher.tab.progress', icon: Users },
+  { id: 'at-risk', labelKey: 'teacher.tab.atRisk', icon: AlertTriangle },
+  { id: 'heatmap', labelKey: 'teacher.tab.heatmap', icon: Flame },
+  { id: 'conference', labelKey: 'teacher.tab.conference', icon: FileText },
+  { id: 'messages', labelKey: 'teacher.tab.messages', icon: MessageSquare },
 ]
 
 export function TeacherApp() {
   const { user } = useSession()
+  const tr = useT()
   const [tab, setTab] = React.useState<Tab>('classes')
   const [activeCourseId, setActiveCourseId] = React.useState<string | null>(null)
 
@@ -48,7 +50,7 @@ export function TeacherApp() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {t.label}
+                {tr(t.labelKey)}
               </button>
             )
           })}

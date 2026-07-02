@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 /**
  * Seed MemoraX with a realistic demo dataset.
@@ -9,8 +10,15 @@ import { db } from '@/lib/db'
  *  - Mia Garcia (student, 8th grade) — enrolled in all three
  *  - Leo Garcia (student, 6th grade) — enrolled in Math 6, Earth Science
  *  - Sofia Garcia (parent) + Carlos Garcia (parent) — both linked to Mia & Leo
+ *  - Admin (admin@memorax.school) — admin dashboard login
+ *
+ * Demo passwords (bcrypt-hashed at seed time):
+ *  - students / parents / teacher  → demo1234
+ *  - admin                         → admin1234
  */
 export async function seedDatabase() {
+  const studentHash = bcrypt.hashSync('demo1234', 10)
+  const adminHash = bcrypt.hashSync('admin1234', 10)
   // wipe
   await db.teacherMessage.deleteMany()
   await db.reminder.deleteMany()
@@ -25,13 +33,14 @@ export async function seedDatabase() {
   await db.user.deleteMany()
 
   // ---------- Users ----------
-  const [teacher, mia, leo, sofia, carlos] = await Promise.all([
+  const [teacher, mia, leo, sofia, carlos, admin] = await Promise.all([
     db.user.create({
       data: {
         email: 'mspatel@memorax.school',
         name: 'Ms. Ananya Patel',
         role: 'TEACHER',
         avatar: '👩🏽‍🏫',
+        password: studentHash,
       },
     }),
     db.user.create({
@@ -41,6 +50,7 @@ export async function seedDatabase() {
         role: 'STUDENT',
         avatar: '👧🏽',
         grade: '8th Grade',
+        password: studentHash,
       },
     }),
     db.user.create({
@@ -50,6 +60,7 @@ export async function seedDatabase() {
         role: 'STUDENT',
         avatar: '👦🏽',
         grade: '6th Grade',
+        password: studentHash,
       },
     }),
     db.user.create({
@@ -58,6 +69,7 @@ export async function seedDatabase() {
         name: 'Sofia Garcia',
         role: 'PARENT',
         avatar: '👩🏻',
+        password: studentHash,
       },
     }),
     db.user.create({
@@ -66,6 +78,16 @@ export async function seedDatabase() {
         name: 'Carlos Garcia',
         role: 'PARENT',
         avatar: '👨🏻',
+        password: studentHash,
+      },
+    }),
+    db.user.create({
+      data: {
+        email: 'admin@memorax.school',
+        name: 'Admin',
+        role: 'ADMIN',
+        avatar: '🛡️',
+        password: adminHash,
       },
     }),
   ])
@@ -525,5 +547,5 @@ export async function seedDatabase() {
     ],
   })
 
-  return { teacher, mia, leo, sofia, carlos, family }
+  return { teacher, mia, leo, sofia, carlos, admin, family }
 }

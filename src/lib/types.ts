@@ -1,12 +1,14 @@
 // Shared MemoraX types
 
-export type Role = 'STUDENT' | 'PARENT' | 'TEACHER'
+export type Role = 'STUDENT' | 'PARENT' | 'TEACHER' | 'ADMIN'
 
 export type View =
   | 'landing'
   | 'student'
   | 'parent'
   | 'teacher'
+  | 'adminLogin'
+  | 'admin'
 
 export type StudentTab = 'chat' | 'classroom' | 'homework' | 'memories' | 'review' | 'exam' | 'avatar' | 'groups'
 export type ParentTab = 'inbox' | 'progress' | 'family' | 'insights' | 'messages' | 'settings' | 'billing'

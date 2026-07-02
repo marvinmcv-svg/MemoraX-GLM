@@ -13,21 +13,23 @@ import { BellRing, Users, Sparkles, MessageSquare, Settings, CreditCard } from '
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useT } from '@/lib/i18n'
 import { ParentBilling } from '@/components/payments/parent-billing'
 
-const TABS: { id: ParentTab; label: string; icon: React.ElementType }[] = [
-  { id: 'inbox', label: 'Inbox', icon: BellRing },
-  { id: 'insights', label: 'Insights', icon: Sparkles },
-  { id: 'family', label: 'Family', icon: Users },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
-  { id: 'settings', label: 'Settings', icon: Settings },
-  { id: 'billing', label: 'Plan & Facturación', icon: CreditCard },
+const TABS: { id: ParentTab; labelKey: string; icon: React.ElementType }[] = [
+  { id: 'inbox', labelKey: 'parent.tab.inbox', icon: BellRing },
+  { id: 'insights', labelKey: 'parent.tab.insights', icon: Sparkles },
+  { id: 'family', labelKey: 'parent.tab.family', icon: Users },
+  { id: 'messages', labelKey: 'parent.tab.messages', icon: MessageSquare },
+  { id: 'settings', labelKey: 'parent.tab.settings', icon: Settings },
+  { id: 'billing', labelKey: 'parent.tab.billing', icon: CreditCard },
 ]
 
 export type ExtendedParentTab = ParentTab | 'insights' | 'messages' | 'settings' | 'billing'
 
 export function ParentApp() {
   const { user } = useSession()
+  const tr = useT()
   const [tab, setTab] = React.useState<ExtendedParentTab>('inbox')
   const [generating, setGenerating] = React.useState(false)
   const [refreshKey, setRefreshKey] = React.useState(0)
@@ -83,7 +85,7 @@ export function ParentApp() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {t.label}
+                {tr(t.labelKey)}
               </button>
             )
           })}

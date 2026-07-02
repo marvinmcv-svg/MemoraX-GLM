@@ -388,3 +388,115 @@ Stage Summary:
 - Stripe works in demo mode (no keys required) and upgrades to live mode when STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET are set
 - QR + Tigo use a manual "Ya pagué" confirmation flow (production: would poll bank API / Tigo webhook)
 - Pricing page + new "Plan & Facturación" tab in parent app wired to the checkout dialog
+
+---
+Task ID: ADMIN-REBUILD
+Agent: main (orchestrator)
+Task: Rebuild the missing admin system + NextAuth authentication (rebuild of prior ADMIN-1 spec)
+
+Work Log:
+- Read prior worklog (no explicit ADMIN-1 entry exists; spec was supplied in task brief). Read existing schema/seed/session/app-shell/landing/layout/types.
+- Installed `bcryptjs` + `@types/bcryptjs`.
+- Schema (prisma/schema.prisma): added `password String?` to User model; widened role comment to `STUDENT | PARENT | TEACHER | ADMIN`. Ran `bun run db:push` (clean apply).
+- Seed (src/lib/seed.ts): added 6th user `Admin` (admin@memorax.school, role ADMIN, avatar 🛡️). All 6 seeded users now get bcrypt password hashes (students/parents/teacher → `demo1234`, admin → `admin1234`). Return tuple includes admin.
+- NextAuth (src/lib/auth.ts): Credentials provider (bcrypt.compareSync email+password against DB), JWT strategy, module augmentation for Session.user.id/role/avatar/grade + JWT.uid. Exported `authOptions`, `getAuthSession()`, `requireAdmin()` (returns `{ok:true, session, user}` or `{ok:false, response}` with 401/403), and `toSafeUser()`.
+- NextAuth route (src/app/api/auth/[...nextauth]/route.ts): v4 pattern `const handler = NextAuth(authOptions); export { handler as GET, handler as POST }`.
+- Admin APIs (all gated by requireAdmin):
+  - GET /api/admin/stats — counts users/students/parents/teachers/admins/courses/assignments/submissions/memories/chats/reminders/families + activeStudents (distinct studentIds with chat OR submission in last 7d).
+  - GET /api/admin/users — all users (safe fields, NO password). POST /api/admin/users — validate email/role/password≥6, bcrypt hash, dedupe by email.
+  - PATCH /api/admin/users/[id] — edit name/email/role/avatar/grade/password; email dedupe; grade only meaningful for STUDENT.
+  - DELETE /api/admin/users/[id] — guards: can't delete self (400), can't delete last admin (400).
+  - GET /api/admin/activity — recent 20 chats + 20 memories + 20 reminders merged + sorted desc, with actor name/avatar.
+  - POST /api/admin/reset — re-seed demo data (reuse seedDatabase()).
+- Types (src/lib/types.ts): added `'ADMIN'` to Role, `'adminLogin'` + `'admin'` to View. (session.ts needed no logic changes — it's a generic view/user store; the expanded union just flows through.)
+- Auth session provider (src/components/auth/session-provider.tsx): 'use client' wrapper around next-auth/react `<SessionProvider>` so admin components can `signIn`/`signOut`/`useSession`.
+- AdminLogin (src/components/admin/admin-login.tsx): card with email+password, calls `signIn('credentials', {redirect:false})`, fetches `/api/auth/session` to confirm role. If ADMIN: sets mock session (useSession.setUser) + view 'admin'. Non-admin → toast "use role cards" + redirect to landing. Discreet B&W + amber (`--mx-warm`) accent, "Demo admin: admin@memorax.school / admin1234" hint, sticky-header + flex-col + mt-auto layout.
+- UserFormDialog + DeleteUserDialog (src/components/admin/user-form-dialog.tsx): 18 emoji avatar presets, role select, conditional grade field (only for STUDENT), optional password reset (≥6 chars, blank = keep current). Delete dialog uses `--mx-clay` for danger styling.
+- AdminApp (src/components/admin/admin-app.tsx): header (MemoraX Admin + admin name + "Back to landing" + "Sign out" + ThemeToggle), stats grid (12 cards: total users, students, parents, teachers, courses, assignments, memories, chats, reminders, families, admins, active-students-7d), user management table (search + 5 role-filter tabs + "New user" + Edit/Delete per row), recent activity feed (max-h-96 overflow-y-auto scroll-thin, 60 items with actor avatar + kind badge + timestamp), danger zone (AlertDialog confirm → reset demo data). Sticky footer with `mt-auto`. Mobile responsive (grid collapses 2/3/4 cols, table scroll-x). Dark mode safe (uses semantic tokens + `--mx-warm`/`--mx-clay` vars).
+- Wiring:
+  - src/components/app-shell.tsx: added `view === 'adminLogin' && <AdminLogin />` + `view === 'admin' && <AdminApp />`.
+  - src/components/landing/landing.tsx: added discreet "Admin" ghost button with Lock icon in footer (alongside "Reset demo") → setView('adminLogin').
+  - src/app/layout.tsx: wrapped app in `<AuthSessionProvider>` (inside ThemeProvider).
+- .env: added `NEXTAUTH_SECRET` (stable dev secret) + `NEXTAUTH_URL=http://localhost:3000`.
+
+Verification:
+- `bun run lint`: clean (0 errors, 0 warnings).
+- `npx tsc --noEmit`: 0 errors in any new/modified file (auth.ts, admin/*, api/admin/*, api/auth/*, app-shell, landing/landing, app/layout, lib/types). 21 pre-existing TS errors remain in untouched files (parent/teacher routes, parent-inbox, teacher-roster, examples/, skills/) — these were present before this task and are out of scope.
+- `bun run db:push`: applied cleanly (added `password` column).
+- Re-seed: `curl -s -X POST http://localhost:3000/api/force-seed` → `{"ok":true,"users":6,"familyId":"..."}` ✓
+- Admin API 401 without auth: `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/admin/stats` → 401 ✓
+- End-to-end admin auth + API (curl with cookie jar):
+  - CSRF → credentials callback → session returns {role:ADMIN, id, email, name, avatar} ✓
+  - /api/admin/stats → counts (6 users, 2 students, 2 parents, 1 teacher, 1 admin, 5 courses, 7 assignments, 7 submissions, 7 memories, 3 chats, 6 reminders, 1 family, 2 active students) ✓
+  - /api/admin/users → 6 users (no passwords) ✓
+  - /api/admin/activity → 16 merged items ✓
+- Admin CRUD (curl):
+  - POST create → 200 with new user record ✓
+  - POST invalid (short pw) → 400 ✓
+  - POST invalid (empty email) → 400 ✓
+  - PATCH rename + grade change → 200 with updated fields ✓
+  - DELETE → 200 ✓
+  - DELETE self (admin's own id) → 400 "You can't delete your own admin account while signed in" ✓
+  - POST /api/admin/reset → 200, restored 6 users ✓
+- Agent Browser verification:
+  - Loaded `/` → Admin footer button visible (Lock icon, "Admin") ✓
+  - Click → AdminLogin page renders with email+password form + "Demo admin: admin@memorax.school / admin1234" hint ✓
+  - Submit admin@memorax.school / admin1234 → "Welcome back, Admin" toast + AdminApp dashboard renders ✓
+  - Stats grid populated (12 numbers via JS eval: 6/2/2/1/5/7/7/3/6/1/1/2) ✓
+  - User table shows all 6 users with role badges + Edit/Delete buttons ✓
+  - Role filter tabs (All/Students/Parents/Teachers/Admins) + search box + "New user" button present ✓
+  - Create user via dialog → row appears in table ✓
+  - Edit user via dialog → name + grade updated in table ✓
+  - Delete user via dialog → row disappears ✓
+  - Sign out button → returns to landing ✓
+  - Demo flow intact: clicked Mia student card → StudentApp with all 8 tabs ✓
+  - Browser console: only HMR logs, zero errors ✓
+  - `agent-browser errors`: empty ✓
+- dev.log tail: only 200 responses (admin stats/users/activity, auth csrf/session/signout, bootstrap, student chat) — zero runtime errors.
+
+Files created (8):
+- src/lib/auth.ts
+- src/app/api/auth/[...nextauth]/route.ts
+- src/app/api/admin/stats/route.ts
+- src/app/api/admin/users/route.ts
+- src/app/api/admin/users/[id]/route.ts
+- src/app/api/admin/activity/route.ts
+- src/app/api/admin/reset/route.ts
+- src/components/auth/session-provider.tsx
+- src/components/admin/admin-login.tsx
+- src/components/admin/user-form-dialog.tsx
+- src/components/admin/admin-app.tsx
+
+Files modified (7):
+- prisma/schema.prisma (added `password String?` + ADMIN role)
+- src/lib/seed.ts (admin user + bcrypt hashes for all 6 users)
+- src/lib/types.ts (added 'ADMIN' to Role, 'adminLogin'+'admin' to View)
+- src/components/app-shell.tsx (added admin view cases)
+- src/components/landing/landing.tsx (added discreet Admin footer button)
+- src/app/layout.tsx (wrapped in AuthSessionProvider)
+- .env (added NEXTAUTH_SECRET + NEXTAUTH_URL)
+
+Stage Summary:
+- Admin system + NextAuth authentication fully rebuilt and verified end-to-end.
+- Schema/seed extended with ADMIN role + bcrypt password hashes (all 6 demo users can now log in via credentials).
+- NextAuth Credentials provider + JWT strategy + requireAdmin guard gating 5 admin API routes.
+- Admin dashboard renders 12 stat cards, full user CRUD table (search + role filters + Edit/Delete with self-delete + last-admin guards), recent activity feed, and danger-zone reset.
+- Discreet admin entry via footer lock icon — doesn't break existing demo flow (role cards still work).
+- B&W + amber (`--mx-warm`) accent + clay (`--mx-clay`) danger palette throughout, dark-mode safe, mobile responsive, sticky footer.
+- Lint clean, zero new TS errors, zero runtime errors in dev.log.
+
+---
+Task ID: ADMIN-REBUILD + I18N-TOGGLE
+Agent: main (orchestrator)
+Task: Rebuild lost admin system + add ES/EN language toggle
+
+Work Log:
+- Admin system rebuilt (was lost in repo rollback): NextAuth credentials provider, admin role + bcrypt passwords in schema, admin login component, admin dashboard (12 stat cards, user CRUD with create/edit/delete dialogs, activity feed, reset), 4 gated admin APIs (stats/users/activity/reset), SessionProvider wrapper, discreet "Admin" footer button on landing. Demo: admin@memorax.school / admin1234. Verified: 401 without auth, CRUD works, browser-verified dashboard.
+- i18n system built: src/lib/i18n.ts with ES (default, Bolivia) + EN dictionaries covering landing/nav/tabs/admin/common. useT() hook + useTParts() for accent-tagged strings. Zustand-persisted lang store. LangToggle component (ES|EN segmented control) wired into landing header + shared app-header (all 3 apps).
+- Translated surfaces: landing (nav, hero, section headings, footer, admin button), student app tabs, parent app tabs, teacher app tabs. Payment UI was already Spanish.
+- Verification (browser): ES default ✓ (hero "El compañero de estudio con IA"), toggle to EN works ✓ (hero → "The AI study companion"), admin footer button present ✓, admin API 401-guarded ✓, lint clean, i18n code tsc-clean.
+
+Stage Summary:
+- Admin system restored (login + dashboard + CRUD + NextAuth)
+- ES/EN toggle live across landing + all 3 app tab bars; Spanish default for Bolivia launch
+- Remaining to translate: in-screen content of student/parent/teacher tabs (chat bubbles, inbox items, etc.) — infrastructure + hook in place for incremental translation

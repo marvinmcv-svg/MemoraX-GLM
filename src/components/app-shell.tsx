@@ -7,6 +7,8 @@ import { Landing } from '@/components/landing/landing'
 import { StudentApp } from '@/components/student/student-app'
 import { ParentApp } from '@/components/parent/parent-app'
 import { TeacherApp } from '@/components/teacher/teacher-app'
+import { AdminLogin } from '@/components/admin/admin-login'
+import { AdminApp } from '@/components/admin/admin-app'
 
 export function AppShell() {
   const { view, bootstrapped, setBootstrapped } = useSession()
@@ -55,6 +57,8 @@ export function AppShell() {
       {view === 'student' && <StudentApp />}
       {view === 'parent' && <ParentApp />}
       {view === 'teacher' && <TeacherApp />}
+      {view === 'adminLogin' && <AdminLogin />}
+      {view === 'admin' && <AdminApp />}
     </div>
   )
 }

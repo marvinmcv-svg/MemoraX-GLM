@@ -3,6 +3,7 @@
 import { ArrowLeft, LogOut } from 'lucide-react'
 import { Logo } from '@/components/brand/logo'
 import { ThemeToggle } from '@/components/brand/theme-toggle'
+import { LangToggle } from '@/components/lang-toggle'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/lib/session'
 import type { SafeUser } from '@/lib/types'
@@ -52,6 +53,7 @@ export function AppHeader({
         </div>
         <div className="flex items-center gap-1.5">
           {rightSlot}
+          <LangToggle className="hidden sm:inline-flex" />
           <ThemeToggle />
           <Button
             variant="ghost"

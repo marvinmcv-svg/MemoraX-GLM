@@ -14,6 +14,7 @@ import {
   Sparkles,
   ShieldCheck,
   Lightbulb,
+  Lock,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Logo } from '@/components/brand/logo'
@@ -22,15 +23,24 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Pricing } from '@/components/landing/pricing'
+import { LangToggle } from '@/components/lang-toggle'
 import { useSession } from '@/lib/session'
+import { useT, useTParts } from '@/lib/i18n'
 import { api } from '@/lib/api-client'
 import type { SafeUser } from '@/lib/types'
 import { toast } from 'sonner'
 
 export function Landing() {
   const { setView, setUser, setActiveStudentId } = useSession()
+  const t = useT()
+  const tp = useTParts()
   const [users, setUsers] = React.useState<SafeUser[]>([])
   const [loading, setLoading] = React.useState<Record<string, boolean>>({})
+
+  const goToAdmin = () => {
+    setUser(null)
+    setView('adminLogin')
+  }
 
   React.useEffect(() => {
     api.listUsers().then((r) => setUsers(r.users))
@@ -64,15 +74,16 @@ export function Landing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
           <Logo />
           <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-            <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-            <a href="#roles" className="hover:text-foreground transition-colors">For families</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-            <a href="#trust" className="hover:text-foreground transition-colors">Why MemoraX</a>
+            <a href="#how" className="hover:text-foreground transition-colors">{t('nav.how')}</a>
+            <a href="#roles" className="hover:text-foreground transition-colors">{t('nav.families')}</a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">{t('nav.pricing')}</a>
+            <a href="#trust" className="hover:text-foreground transition-colors">{t('nav.why')}</a>
           </nav>
           <div className="flex items-center gap-2">
+            <LangToggle />
             <ThemeToggle />
             <Button size="sm" onClick={() => document.getElementById('roles')?.scrollIntoView({ behavior: 'smooth' })}>
-              Get started
+              {t('nav.getStarted')}
             </Button>
           </div>
         </div>
@@ -92,32 +103,30 @@ export function Landing() {
             className="max-w-3xl"
           >
             <Badge variant="secondary" className="mb-5 gap-1.5 py-1.5 pl-2 pr-3">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs">A memory layer built for school — inspired by memorae.ai</span>
+              <Sparkles className="h-3.5 w-3.5 text-[var(--mx-accent)]" />
+              <span className="text-xs">{t('landing.badge')}</span>
             </Badge>
             <h1 className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
-              The AI study companion
+              {t('landing.hero.title1')}
               <br />
-              that <span className="text-primary">remembers</span> how your
-              <br className="hidden sm:block" /> child learns.
+              {(() => { const p = tp('landing.hero.title2'); return <>{p.before}<span className="text-[var(--mx-accent)]">{p.accent}</span>{p.after}</>; })()}
+              <br className="hidden sm:block" /> {t('landing.hero.title3')}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              MemoraX lives where students already are — a chat assistant that syncs with Google
-              Classroom, guides homework step-by-step (Socratic, never just answers), and keeps
-              parents and teachers in the loop.
+              {t('landing.hero.desc')}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button size="lg" className="gap-2 h-12 px-6" onClick={() => document.getElementById('roles')?.scrollIntoView({ behavior: 'smooth' })}>
-                Try the demo <ArrowRight className="h-4 w-4" />
+                {t('landing.hero.cta')} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-6" asChild>
-                <a href="#how">See how it works</a>
+                <a href="#how">{t('landing.hero.how')}</a>
               </Button>
             </div>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> Privacy-first</span>
-              <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-primary" /> Socratic tutor</span>
-              <span className="flex items-center gap-1.5"><CalendarClock className="h-4 w-4 text-primary" /> Google Classroom sync</span>
+              <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> {t('landing.hero.trust.privacy')}</span>
+              <span className="flex items-center gap-1.5"><GraduationCap className="h-4 w-4 text-primary" /> {t('landing.hero.trust.socratic')}</span>
+              <span className="flex items-center gap-1.5"><CalendarClock className="h-4 w-4 text-primary" /> {t('landing.hero.trust.classroom')}</span>
             </div>
           </motion.div>
 
@@ -165,7 +174,7 @@ export function Landing() {
       {/* How it works */}
       <section id="how" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 w-full">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">One memory. Three ways to use it.</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('landing.oneMemory.title')}</h2>
           <p className="mt-3 text-muted-foreground">
             Every homework session, every concept a student struggled with, becomes memory the tutor
             draws on later — and that parents and teachers can see.
@@ -222,7 +231,7 @@ export function Landing() {
       <section id="roles" className="mx-auto max-w-6xl px-4 sm:px-6 py-16 w-full">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <Badge variant="secondary" className="mb-3">Live demo</Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Jump in as anyone</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t('landing.roles.title')}</h2>
           <p className="mt-3 text-muted-foreground">
             This is a fully-seeded demo. Pick a role and explore — no signup needed.
           </p>
@@ -314,7 +323,7 @@ export function Landing() {
         <Card className="overflow-hidden border-border/60">
           <div className="grid md:grid-cols-2">
             <div className="p-8 sm:p-10">
-              <h3 className="text-2xl font-bold tracking-tight">Why families choose MemoraX</h3>
+              <h3 className="text-2xl font-bold tracking-tight">{t('landing.why.title')}</h3>
               <p className="mt-3 text-muted-foreground leading-relaxed">
                 We took the calm, memory-first philosophy of memorae.ai and re-engineered it for the
                 realities of school life — homework, due dates, exams, and the chaos of family
@@ -343,19 +352,31 @@ export function Landing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo size="sm" />
           <p className="text-sm text-muted-foreground text-center sm:text-right">
-            MemoraX — a memorae-inspired study companion. Demo build for exploration.
+            {t('landing.footer.tagline')}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => {
-              useSession.getState().reset()
-              window.location.reload()
-            }}
-          >
-            Reset demo
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
+              onClick={goToAdmin}
+              aria-label={t('landing.footer.admin')}
+              title={t('landing.footer.admin')}
+            >
+              <Lock className="h-3.5 w-3.5" /> {t('landing.footer.admin')}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => {
+                useSession.getState().reset()
+                window.location.reload()
+              }}
+            >
+              Reset demo
+            </Button>
+          </div>
         </div>
       </footer>
     </div>

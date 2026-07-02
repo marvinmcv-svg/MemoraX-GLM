@@ -16,9 +16,10 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
-  role      String   @default("STUDENT") // STUDENT | PARENT | TEACHER
+  role      String   @default("STUDENT") // STUDENT | PARENT | TEACHER | ADMIN
   avatar    String?  // emoji or initials
   grade     String?  // for students e.g. "7th Grade"
+  password  String?  // bcrypt hash — only set for credentials-login users (e.g. ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
